@@ -1,0 +1,24 @@
+namespace: prod
+
+gateway:
+  replicaCount: 3
+  image:
+    tag: v1.0.0
+  resources:
+    limits:
+      memory: 1Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+order:
+  replicaCount: 3
+  image:
+    tag: v1.0.0
+  resources:
+    limits:
+      memory: 1Gi
+  autoscaling:
+    enabled: true

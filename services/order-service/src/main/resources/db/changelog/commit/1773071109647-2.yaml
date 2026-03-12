@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1773071109647-2
+      author: sqGolliaf
+      changes:
+        - renameTable:
+            oldTableName: t_dql_event
+            newTableName: t_dlq_event
+            schemaName: public
+        - renameTable:
+            oldTableName: t_outbox_events
+            newTableName: t_outbox_event
+            schemaName: public

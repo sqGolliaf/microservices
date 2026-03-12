@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: order
+
+  profiles:
+    active: dev
+server:
+  port: 8080
+  address: 0.0.0.0
+  servlet:
+    context-path: /api/v1

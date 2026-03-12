@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: order
+
+  datasource:
+    url: ${my.datasource.url}
+    driver-class-name: org.postgresql.Driver
+    username: ${my.datasource.username}
+    password: ${my.datasource.password}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: ${my.broker.bootstrap-servers}
+    consumer:
+      bootstrap-servers: ${my.broker.consume.bootstrap-servers}
+      group-id: ${my.broker.consumers.group-id}
+      auto-offset-reset: earliest
+      max-poll-records: 100
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      compression-type: snappy
+
+  liquibase:
+    changeLog: classpath:db/changelog/db.changelog-master.yaml
+
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+
+logging:
+  level:
+    ru.sg: ${my.logging.level}
+    org.springframework.kafka: ${my.logging.spring.level}
+
+
+order:
+  events:
+    topic:
+      name: ${my.order.events.topic.name}
+    outbox:
+      max-retries: ${my.order.events.outbox.max-retries}
+      batch-size: ${my.order.events.outbox.batch-size}
+  saga:
+    timeout-minutes: ${my.saga.timeout-minutes}

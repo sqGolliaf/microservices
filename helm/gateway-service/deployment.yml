@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+king: Deployment
+metadata:
+  name: gateway-service
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.gateway.replicaCount }}
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+    spec:
+      containers:
+        - name: gateway-service
+          image: {{ .Values.gateway.image.repository }}:{{ .Values.gateway.image.tag }}
+          ports:
+            - containerPort: {{ .Values.gateway.port }}
+          resources:
+            limits:
+              cpu: {{ .Values.gateway.resources.limits.cpu }}
+              memory: {{ .Values.gateway.resources.limits.memory }}

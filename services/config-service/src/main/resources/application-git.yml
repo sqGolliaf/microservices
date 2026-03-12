@@ -1,0 +1,18 @@
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: ${GIT_URL}
+          ignore-local-ssh-settings: true
+          private-key: |
+                    -----BEGIN OPENSSH PRIVATE KEY-----
+                    b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABB3Dort68
+                    pxh7lK9GzeEQqwAAAAGAAAAAEAAAAzAAAAC3NzaC1lZDI1NTE5AAAAIKm6cBXnZ+DGStGI
+                    MRn8iAz4rMJwgs9Ik0d0vMeUV6QjAAAAoBxow/JOFUyrYiPp8GkNTzhfvhXyr84rR6gUvq
+                    YiZDShmb2+ICYaqSnNHJ6YNmfnEGBKyF9i5Zh3cFE+xrGLmdZqkpq4GIJdHsb2mjnFkC1p
+                    P8siTy4FqnnTNbwiPQAo6l5BebzQ0/6VefwlJVJUEEQH7en64CIoSn+dP6Z+jmqoI5qchL
+                    WIwjiY0Do/j0ZizTIJFbfLG2CIkRap5Mkr1sM=
+                    -----END OPENSSH PRIVATE KEY-----
+          host-key-algorithm: ed25519
+          host-key: PandoraSQ123

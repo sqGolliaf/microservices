@@ -1,0 +1,17 @@
+namespace: dev
+
+gateway:
+  replicaCount: 1
+  image:
+    tag: develop
+  resources:
+    limits:
+      memory: 256Mi
+
+order:
+  replicaCount: 1
+  image:
+    tag: develop
+  resources:
+    limits:
+      memory: 256Mi

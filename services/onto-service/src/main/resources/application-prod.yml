@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: App
+  jpa:
+    defer-datasource-initialization: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: test
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+    context-path: /api/v1/
+  port: 8080
+
+logging:
+  level:
+    org.apache.kafka: WARN
+    org.springframework.kafka: DEBUG
+
+file:
+  onto:
+    url: classpath:data/main.ont

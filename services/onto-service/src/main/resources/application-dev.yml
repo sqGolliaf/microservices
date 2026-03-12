@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: App
+  jpa:
+    defer-datasource-initialization: false
+
+file:
+  onto:
+    url: classpath:data/main.ont
+
+accounts:
+  admin: admin

@@ -1,0 +1,95 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/order
+    driver-class-name: org.postgresql.Driver
+    username: admin
+    password: admin
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: localhost:29092
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: order-service-group
+      auto-offset-reset: earliest
+      max-poll-records: 100
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      compression-type: snappy
+
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+
+  cloud:
+    openfeign:
+      client:
+        config:
+          user-service:
+            url: http://localhost:8081
+            connect-timeout: 5000
+            read-timeout: 10000
+            logger-level: full
+
+  logging:
+    level:
+      root: INFO
+      ru.sg: DEBUG
+      org.springframework.kafka: DEBUG
+    pattern:
+      console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+      file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file:
+      name: logs/order-service.log
+    logback:
+      rollingpolicy:
+        max-file-size: 10MB
+        max-history: 30
+
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      user-services:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 2s
+
+logging:
+  level:
+    ru.sg.order: DEBUG
+    ru.sg.order.event.consumer: DEBUG
+    org.springframework.kafka: DEBUG
+
+order:
+  events:
+    topic:
+      name: order-events
+    outbox:
+      max-retries: 5
+      batch-size: 100
+  saga:
+    timeout-minutes: 5

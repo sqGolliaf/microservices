@@ -1,0 +1,52 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment
+    driver-class-name: org.postgresql.Driver
+    username: admin
+    password: admin
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    bootstrap-servers: localhost:29092
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: payment-service-group
+      auto-offset-reset: earliest
+      max-poll-records: 100
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      compression-type: snappy
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 5000
+
+payment:
+  event:
+    topic:
+      name: payment-events
+    outbox:
+      batch-size: 10
+      max-retries: 5
+
+logging:
+  level:
+    ru.sg: INFO
+    org.springframework.kafka: INFO
+
+server:
+  port: 8082
