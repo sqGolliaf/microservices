@@ -1,0 +1,85 @@
+  pipeline {
+
+    agent any
+
+    options {
+  timeout(time: 30, unit: 'MINUTES')
+    timestamps()
+  }
+
+    environment {
+    
+    DOCKER_REGISTRY = 'docker.io'
+  DOCKER_NAMESPACE = "${env.DOCKER_USERNAME ?: 'your-docker-username'}"
+
+        KUBE_NAMESPACE = "${env.KUBE_NAMESPACE ?: 'default'}"
+        KUBE_CLUSTER = "${env.KUBE_CLUSTER ?: 'kubernetes-cluster'}"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo '========== CHECKOUT =========='
+                checkout scm
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+
+                echo '========== DEPLOY =========='
+
+                sh """
+                                                                                                                                                                                  kubectl config use-context ${KUBE_CLUSTER}
+                                                                                                                                                                                  
+                                                                                                                                                                                  helm upgrade --install microservices ./helm \
+                                                                                                                                                                                  --namespace ${KUBE_NAMESPACE} \
+                                                                                                                                                                                  --create-namespace \
+                                                                                                                                                                                  --values ./helm/values.yaml \
+                                                                                                                                                                                  --set image.tag=${BUILD_NUMBER}
+                                                                                                                                                                                  """
+            }
+        }
+
+        stage('Smoke Tests') {
+            steps {
+
+                echo '========== SMOKE TESTS =========='
+
+                sh """
+                                                                                                                                                                                  sleep 30
+                                                                                                                                                                                  kubectl get pods -n ${KUBE_NAMESPACE}
+                                                                                                                                                                                  """
+            }
+        }
+
+        stage('Update Prometheus') {
+            steps {
+
+                echo '========== PROMETHEUS =========='
+
+                sh """
+                                                                                                                                                                                  cp pipeline/prometheus.yml /etc/prometheus/prometheus.yml || true
+                                                                                                                                                                                  curl -X POST http://prometheus:9090/-/reload || true
+                                                                                                                                                                                  """
+  }
+  }
+
+  }
+
+    post {
+    
+    success {
+    echo 'DEPLOY SUCCESS'
+  }
+
+    failure {
+    echo 'DEPLOY FAILED'
+  }
+
+    always {
+    cleanWs()
+  }
+  }
+  }

@@ -14,15 +14,6 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
-server:
-  servlet:
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
-    context-path: /api/v1/
-  port: 8080
-
 logging:
   level:
     org.apache.kafka: WARN

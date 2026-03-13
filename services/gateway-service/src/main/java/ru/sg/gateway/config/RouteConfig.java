@@ -1,16 +1,13 @@
 package ru.sg.gateway.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.servlet.function.RequestPredicates;
-import org.springframework.web.servlet.function.RouterFunction;
-import org.springframework.web.servlet.function.ServerRequest;
-import org.springframework.web.servlet.function.ServerResponse;
+import org.springframework.web.servlet.function.*;
 
+import java.util.Map;
 import java.util.function.Function;
 
 import static org.springframework.cloud.gateway.server.mvc.filter.BeforeFilterFunctions.uri;
@@ -18,27 +15,31 @@ import static org.springframework.cloud.gateway.server.mvc.handler.GatewayRouter
 import static org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions.http;
 
 @Configuration
+@RequiredArgsConstructor
 public class RouteConfig {
 
-    @Value("${services.order-service.url:http://order-service:8080}")
-    private String orderServiceUrl;
+    private final ServicesConfig servicesConfig;
 
     @Bean
     RouterFunction<ServerResponse> gatewayRoutes() {
-        return route("order-service")
-                .route(RequestPredicates.path("/api/v1/orders/**"), http())
-                .before(uri(orderServiceUrl))
-                .before(addUserHeaders())
-                .build();
+        var builder = route("dynamic-services");
+
+        for (Map.Entry<String, ServicesConfig.ServiceInfo> entry : servicesConfig.getUserServices().entrySet()) {
+            String path = entry.getValue().getPath();
+            String url = entry.getValue().getUrl();
+
+            builder = builder.route(RequestPredicates.path(path), http())
+                    .before(uri(url))
+                    .before(addUserHeaders());
+        }
+
+        return builder.build();
     }
 
     private Function<ServerRequest, ServerRequest> addUserHeaders() {
         return request -> {
-            Authentication auth =
-                    SecurityContextHolder.getContext().getAuthentication();
-
+            var auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth instanceof JwtAuthenticationToken jwtAuth) {
-
                 String userId = jwtAuth.getToken().getSubject();
                 String username = jwtAuth.getToken().getClaim("preferred_username");
                 String email = jwtAuth.getToken().getClaim("email");
@@ -49,7 +50,6 @@ public class RouteConfig {
                         .header("X-EMAIL", email)
                         .build();
             }
-
             return request;
         };
     }

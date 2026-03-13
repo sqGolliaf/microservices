@@ -1,0 +1,129 @@
+  pipeline {
+    agent any
+
+    options {
+  buildDiscarder(logRotator(numToKeepStr: '10'))
+  timeout(time: 30, unit: 'MINUTES')
+    timestamps()
+  }
+
+    triggers {
+    githubPush()
+  }
+
+    environment {
+    JAVA_HOME = '/usr/lib/jvm/java-17-openjdk'
+    
+    DOCKER_REGISTRY = 'docker.io'
+  DOCKER_NAMESPACE = "${env.DOCKER_USERNAME ?: 'your-docker-username'}"
+
+        SERVICES = "account-service payment-service order-service product-service"
+  }
+
+    stages {
+    
+    stage('Checkout') {
+    steps {
+    echo '========== CHECKOUT =========='
+    checkout scm
+    sh 'git log --oneline -5'
+    }
+  }
+
+    stage('Build') {
+    steps {
+    echo '========== BUILD =========='
+    sh './gradlew clean build -x test'
+    }
+  }
+
+    stage('Tests') {
+    steps {
+    echo '========== TESTS =========='
+    sh './gradlew test'
+    junit 'build/test-results/test/*.xml'
+    }
+  }
+
+    stage('SonarQube Analysis') {
+    steps {
+    echo '========== SONARQUBE =========='
+    sh './gradlew sonarqube'
+    }
+  }
+
+    stage('Archive Artifacts') {
+    steps {
+    echo '========== ARCHIVE =========='
+  archiveArtifacts artifacts: '**/build/libs/*.jar', allowEmptyArchive: true
+  }
+  }
+
+    stage('Docker Build') {
+    steps {
+    echo '========== DOCKER BUILD =========='
+    
+    script {
+    for (service in SERVICES.split()) {
+    
+    if (fileExists("services/${service}")) {
+    
+    sh """
+    docker build \
+    -t ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${service}:${BUILD_NUMBER} \
+    -t ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${service}:latest \
+    services/${service}
+    """
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            when {
+                branch 'dev'
+            }
+
+            steps {
+
+                echo '========== DOCKER PUSH =========='
+
+                sh """
+    echo "${DOCKER_PASSWORD}" | docker login \
+    -u "${DOCKER_USERNAME}" \
+    --password-stdin ${DOCKER_REGISTRY}
+    """
+
+                script {
+                    for (service in SERVICES.split()) {
+
+                        if (fileExists("services/${service}")) {
+    
+    sh """
+    docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${service}:${BUILD_NUMBER}
+    docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${service}:latest
+    """
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+
+        always {
+            cleanWs()
+            sh "docker logout ${DOCKER_REGISTRY} || true"
+  }
+
+    success {
+    echo 'CI SUCCESS'
+  }
+
+    failure {
+    echo 'CI FAILED'
+  }
+  }
+  }
