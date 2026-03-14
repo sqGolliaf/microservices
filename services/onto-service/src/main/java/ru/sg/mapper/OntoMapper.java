@@ -9,23 +9,23 @@ import ru.sg.model.Node;
 @Mapper(componentModel = "spring")
 public interface OntoMapper {
 
-    @Mapping(target = "text", source = "node", qualifiedByName = "mapName")
+    @Mapping(target = "name", source = "node", qualifiedByName = "mapName")
     @Mapping(target = "attribute", source = "node", qualifiedByName = "mapFinalyze")
     OntoResponse toDto(Node node);
 
     @Named("mapName")
     default String mapName(Node node) {
-        return node.name();
+        return node.getName();
     }
 
     @Named("mapFinalyze")
     default String mapFinalyze(Node node) {
-        if (node.getAttribute("finalyze") != null) {
-            return node.getAttribute("finalyze");
+        if (node.getAttribute("finalyze").isPresent()) {
+            return node.getAttribute("finalyze").get();
         }
-        if (node.getAttribute("text") != null) {
-            return node.getAttribute("text");
+        if (node.getAttribute("text").isPresent()) {
+            return node.getAttribute("text").get();
         }
-        return null; // или пустая строка ""
+        return null;
     }
 }

@@ -18,7 +18,7 @@ public class OntoController {
 
     private final OntoService ontoService;
 
-    @Value("${app.onto.start-node-name:#Старт}")
+    @Value("${app.onto.start-node-name:#старт}")
     private String startNodeName;
 
     @GetMapping

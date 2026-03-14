@@ -11,13 +11,6 @@ import ru.sg.services.OntoService;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Service layer for ontology operations.
- * Transforms domain models (Node, Link) into DTOs for API responses.
- * Provides business logic for ontology graph traversal.
- *
- * @since 2.0
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,11 +23,6 @@ public class OntoServiceImpl implements OntoService {
 
     private final Onto dataOnt;
 
-    /**
-     * Gets all nodes in the ontology as DTOs.
-     *
-     * @return list of all nodes converted to OntoResponse
-     */
     @Override
     public List<OntoResponse> nodes() {
         log.debug("Fetching all nodes");
@@ -43,14 +31,6 @@ public class OntoServiceImpl implements OntoService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Gets the first node by name and all nodes linked from it.
-     * Used as entry point for ontology traversal.
-     *
-     * @param name the node name to find
-     * @return list of nodes linked from the start node
-     * @throws IllegalArgumentException if start node not found
-     */
     @Override
     public List<OntoResponse> firstNodeByName(String name) {
         log.debug("Fetching start node with name: {}", name);
@@ -70,13 +50,6 @@ public class OntoServiceImpl implements OntoService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Gets nodes linked via "a_path_of" relation to a given node.
-     * Represents path/hierarchy relations.
-     *
-     * @param id the source node ID
-     * @return list of nodes in the path relationship
-     */
     @Override
     public List<OntoResponse> getNodesByIdToPath(Integer id) {
         log.debug("Fetching path nodes for node id: {}", id);
@@ -95,13 +68,6 @@ public class OntoServiceImpl implements OntoService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Gets nodes linked via "is_a" relation to a given node.
-     * Represents type/hierarchy relations.
-     *
-     * @param id the source node ID
-     * @return list of nodes in the is_a relationship
-     */
     @Override
     public List<OntoResponse> getNodesByIdToIs(Integer id) {
         log.debug("Fetching is_a nodes for node id: {}", id);
@@ -120,13 +86,6 @@ public class OntoServiceImpl implements OntoService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Gets nodes linked FROM a given node via "position" relation.
-     * Represents positional relations.
-     *
-     * @param id the source node ID
-     * @return list of nodes with position relations
-     */
     @Override
     public List<OntoResponse> getNodesByIdFrom(Integer id) {
         log.debug("Fetching position nodes from node id: {}", id);
@@ -145,13 +104,6 @@ public class OntoServiceImpl implements OntoService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Maps a Node domain model to OntoResponse DTO.
-     * Extracts key attributes for API response.
-     *
-     * @param node the node to map
-     * @return OntoResponse DTO
-     */
     private OntoResponse mapNodeToResponse(Node node) {
         String finalizedAttr = node.getUniqueAttribute(ATTR_FINALIZED)
                 .orElse(null);

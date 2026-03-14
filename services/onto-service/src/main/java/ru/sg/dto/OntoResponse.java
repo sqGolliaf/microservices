@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Hashtable;
 import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

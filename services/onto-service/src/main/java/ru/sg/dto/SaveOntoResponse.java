@@ -1,11 +1,12 @@
 package ru.sg.dto;
 
-
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serial;
 import java.io.Serializable;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record SaveOntoResponse(
         @JsonProperty("id")
         Integer id,

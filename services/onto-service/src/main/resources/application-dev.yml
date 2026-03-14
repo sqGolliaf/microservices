@@ -4,6 +4,14 @@ spring:
   jpa:
     defer-datasource-initialization: false
 
-file:
+app:
   onto:
+    start-node-name: "#старт"
+    cors:
+      allowed-origins: http://localhost:3000,http://localhost:9000
     url: classpath:data/main.ont
+
+logging:
+  level:
+    org.apache.kafka: WARN
+    org.springframework.kafka: DEBUG
