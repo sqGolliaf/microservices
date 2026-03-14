@@ -1,4 +1,4 @@
-package ru.sg.models;
+package ru.sg.model;
 
 import org.json.JSONException;
 import org.json.JSONObject;

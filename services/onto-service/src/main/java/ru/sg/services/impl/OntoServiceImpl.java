@@ -2,8 +2,8 @@ package ru.sg.services.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.sg.models.Node;
-import ru.sg.models.Onto;
+import ru.sg.model.Node;
+import ru.sg.model.Onto;
 import ru.sg.dto.OntoResponse;
 import ru.sg.services.OntoService;
 

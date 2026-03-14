@@ -7,6 +7,3 @@ spring:
 file:
   onto:
     url: classpath:data/main.ont
-
-accounts:
-  admin: admin

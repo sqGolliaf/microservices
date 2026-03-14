@@ -20,5 +20,5 @@ services:
       url: http://order-service:8080
       path: /api/v1/orders/**
     onto-service:
-      url: http://localhost:8080
+      url: http://onto-service:8080
       path: /api/v1/onto/**

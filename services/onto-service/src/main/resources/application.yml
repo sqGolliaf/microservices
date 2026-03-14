@@ -1,9 +1,20 @@
 spring:
+  application:
+    name: onto-service
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
 server:
-  port: ${SERVER_PORT:8080}
-
+  port: ${SERVER_PORT:8084}
   servlet:
     context-path: /api/v1/
+  compression:
+    enabled: true
+    min-response-size: 1024
+
+app:
+  onto:
+    start-node-name: "#Старт"
+    cors:
+      allowed-origins: http://localhost:3000,http://localhost:9000
+    url: classpath:data/main.ont
