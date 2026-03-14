@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.sg.dto.OntoResponse;
-import ru.sg.model.Link;
 import ru.sg.model.Node;
 import ru.sg.model.Onto;
 import ru.sg.services.OntoService;
