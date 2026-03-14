@@ -19,7 +19,7 @@ public class OntoServiceImpl implements OntoService {
     public List<OntoResponse> nodes() {
         return Arrays.stream(dataOnt.getNodes())
                 .map(it -> new OntoResponse(
-                        it.getID(),
+                        it.getId(),
                         it.getName(),
                         it.getStorage(),
                         it.getUniqueAttribute("finalyze")))

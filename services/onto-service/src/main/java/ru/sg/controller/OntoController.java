@@ -1,6 +1,7 @@
 package ru.sg.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,14 +13,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/onto")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:9000")
+@CrossOrigin(origins = "${app.onto.cors.allowed-origins:http://localhost:9000}")
 public class OntoController {
 
     private final OntoService ontoService;
 
-    @GetMapping("/")
+    @Value("${app.onto.start-node-name:#Старт}")
+    private String firstNode;
+
+    @GetMapping
     public ResponseEntity<List<OntoResponse>> getFirstNode() {
-        List<OntoResponse> ontoList = ontoService.firstNodeByName("#Старт");
+        List<OntoResponse> ontoList = ontoService.firstNodeByName(firstNode);
         return new ResponseEntity<>(ontoList, HttpStatus.OK);
     }
 

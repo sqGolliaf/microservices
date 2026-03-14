@@ -22,9 +22,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
-    implementation("org.json:json:20251224")
-    implementation("com.fasterxml.jackson.core:jackson-databind")
-
     implementation("org.mapstruct:mapstruct:1.6.3")
 
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")

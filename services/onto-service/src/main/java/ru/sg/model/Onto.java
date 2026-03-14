@@ -1,297 +1,422 @@
 package ru.sg.model;
 
-import org.json.*;
-import java.io.BufferedReader;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * The Onto class provides container to store ontology.
+ * The Onto class provides a container to store and query ontology data.
+ * Supports loading from JSON files and provides efficient search operations
+ * with caching for O(1) node lookup by ID.
+ *
+ * Optimized with Stream API, proper data structures (List instead of arrays),
+ * and HashMap indexing for fast lookups.
+ *
+ * @since 2.0
  */
+@Slf4j
+@Getter(AccessLevel.PACKAGE)
 public class Onto {
-    JSONObject m_onto;
-    Node[] m_nodes;
-    Link[] m_links;
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    // JSON field constants
+    private static final String FIELD_NODES = "nodes";
+    private static final String FIELD_RELATIONS = "relations";
+
+    private final JsonNode ontoData;
+    private final List<Node> nodes;
+    private final List<Link> links;
+
+    // Индексы для быстрого поиска O(1)
+    private final Map<Integer, Node> nodeById;
+    private final Map<Integer, Link> linkById;
+    private final Map<String, List<Node>> nodesByName;
 
     /**
-     * Onth constructor.
-     * @param ontoFile - input file stream containing the ontology in ONT format.
-     * The content of file is going to be parsed as JSON.
+     * Creates a new Onto from an input stream containing JSON ontology data.
+     *
+     * @param ontoFile input stream with JSON ontology
+     * @throws IOException if unable to read the stream
+     * @throws IllegalArgumentException if JSON is malformed or required fields are missing
      */
-    public Onto(InputStream ontoFile) throws IOException, JSONException {
-        BufferedReader buf = new BufferedReader(new InputStreamReader(ontoFile));
-        String line = buf.readLine();
-        StringBuilder sb = new StringBuilder();
-        while (line != null) {
-            sb.append(line).append("\n");
-            line = buf.readLine();
-        }
-        String ontoString = sb.toString();
-        m_onto = new JSONObject(ontoString);
+    public Onto(InputStream ontoFile) {
+        Objects.requireNonNull(ontoFile, "Input stream cannot be null");
 
-        JSONArray nodes = m_onto.getJSONArray("nodes");
-        int n = nodes.length();
-        m_nodes = new Node[n];
-        for (int i = 0; i < n; ++i) {
-            m_nodes[i] = new Node(nodes.getJSONObject(i), this);
+        // Парсим JSON один раз
+        this.ontoData = MAPPER.readTree(ontoFile);
+
+        if (ontoData == null || !ontoData.isObject()) {
+            throw new IllegalArgumentException("Input must be a valid JSON object");
         }
 
-        JSONArray links = m_onto.getJSONArray("relations");
-        n = links.length();
-        m_links = new Link[n];
-        for (int i = 0; i < n; ++i) {
-            m_links[i] = new Link(links.getJSONObject(i));
-        }
+        // Парсим узлы
+        this.nodes = parseNodes();
+
+        // Парсим связи
+        this.links = parseLinks();
+
+        // Создаем индексы для быстрого поиска
+        this.nodeById = new HashMap<>();
+        this.linkById = new HashMap<>();
+        this.nodesByName = new HashMap<>();
+
+        buildIndices();
+
+        log.info("Ontology loaded: {} nodes, {} links", nodes.size(), links.size());
+
     }
 
     /**
-     * @return array of ontology nodes.
+     * Parses nodes from the ontology JSON.
+     *
+     * @return list of nodes
      */
-    public Node[] getNodes() {
-        return m_nodes;
-    }
+    private List<Node> parseNodes() {
+        if (!ontoData.has(FIELD_NODES)) {
+            log.warn("No nodes field found in ontology");
+            return Collections.emptyList();
+        }
 
-    /**
-     * @return array of ontology relations (all the links bewteen nodes, which exist in the ontology).
-     */
-    public Link[] getLinks() {
-        return m_links;
-    }
+        JsonNode nodesArray = ontoData.get(FIELD_NODES);
+        if (!nodesArray.isArray()) {
+            log.error("Nodes field is not an array");
+            return Collections.emptyList();
+        }
 
-    /**
-     * @param id - unique identifier of node.
-     * @return node with given unique identifier. If no one node matches the given identifier, null is returned.
-     */
-    public Node getNodeByID(int id) {
-        for (int i = 0; i < m_nodes.length; ++i) {
-            if (m_nodes[i].getID() == id) {
-                return m_nodes[i];
+        List<Node> parsedNodes = new ArrayList<>();
+        nodesArray.forEach(nodeData -> {
+            try {
+                Node node = new Node(nodeData, this);
+                parsedNodes.add(node);
+            } catch (Exception e) {
+                log.error("Failed to parse node: {}", nodeData.asText(), e);
             }
-        }
-        return null;
+        });
+
+        return parsedNodes;
     }
 
     /**
-     * @param id - unique identifier of relation.
-     * @return relation with given unique identifier. If no one relation matches the given identifier, null is returned.
+     * Parses links/relations from the ontology JSON.
+     *
+     * @return list of links
      */
-    public Link getLinkByID(int id) {
-        for (int i = 0; i < m_links.length; ++i) {
-            if (m_links[i].getID() == id) {
-                return m_links[i];
+    private List<Link> parseLinks() {
+        if (!ontoData.has(FIELD_RELATIONS)) {
+            log.warn("No relations field found in ontology");
+            return Collections.emptyList();
+        }
+
+        JsonNode relationsArray = ontoData.get(FIELD_RELATIONS);
+        if (!relationsArray.isArray()) {
+            log.error("Relations field is not an array");
+            return Collections.emptyList();
+        }
+
+        List<Link> parsedLinks = new ArrayList<>();
+        relationsArray.forEach(relationData -> {
+            try {
+                Link link = new Link(relationData);
+                parsedLinks.add(link);
+            } catch (Exception e) {
+                log.error("Failed to parse link: {}", relationData.asText(), e);
             }
-        }
-        return null;
+        });
+
+        return parsedLinks;
     }
 
     /**
-     * @param name - name of node.
-     * @return array of nodes matching the given name.
-     * There can be more than one, since the name is not necessary unique within the ontology.
-     * If no one node matches the given name, array will be empty.
+     * Builds indices for fast lookup operations.
      */
-    public ArrayList<Node> getNodesByName(String name) {
-        ArrayList<Node> result = new ArrayList<Node>();
-        for (int i = 0; i < m_nodes.length; ++i) {
-            if (m_nodes[i].getName().equals(name))
-                result.add(m_nodes[i]);
+    private void buildIndices() {
+        // Индекс узлов по ID
+        for (Node node : nodes) {
+            nodeById.put(node.getId(), node);
         }
-        return result;
+
+        // Индекс связей по ID
+        for (Link link : links) {
+            linkById.put(link.getId(), link);
+        }
+
+        // Индекс узлов по имени (может быть несколько с одним именем)
+        for (Node node : nodes) {
+            nodesByName.computeIfAbsent(node.getName(), k -> new ArrayList<>()).add(node);
+        }
+
+        log.debug("Built indices: {} nodes by id, {} links by id, {} node name groups",
+                nodeById.size(), linkById.size(), nodesByName.size());
     }
 
     /**
-     * @param name - name of node.
-     * @return first node matching the given name. If no one node matches the given name, null is returned.
+     * Gets all nodes in the ontology.
+     *
+     * @return unmodifiable list of nodes
      */
-    public Node getFirstNodeByName(String name) {
-        for (int i = 0; i < m_nodes.length; ++i) {
-            if (m_nodes[i].getName().equals(name)) {
-                return m_nodes[i];
-            }
-        }
-        return null;
+    public List<Node> getNodes() {
+        return Collections.unmodifiableList(nodes);
     }
 
     /**
-     * @param node - node to find relations from.
-     * @param linkName - name of the relation.
-     * @return array of nodes, which are connected with the given one by the relation (link) with given name. 
-     * The direction of relation (link) is from the given node to nodes returned.
+     * Gets all links/relations in the ontology.
+     *
+     * @return unmodifiable list of links
      */
-    public ArrayList<Node> getNodesLinkedFrom(Node node, String linkName) {
-        ArrayList<Node> nodes = new ArrayList<Node>();
-        int id = node.getID();
-        for (int i = 0; i < m_links.length; ++i) {
-            if (m_links[i].getSourceID() == id && m_links[i].getName().equals(linkName)) {
-                nodes.add(getNodeByID(m_links[i].getTargetID()));
-            }
-        }
-        return nodes;
+    public List<Link> getLinks() {
+        return Collections.unmodifiableList(links);
     }
 
     /**
-     * @param node - node to find relations to.
-     * @param linkName - name of the relation.
-     * @return array of nodes, which are connected with the given one by the relation (link) with given name.
-     * The direction of relation (link) is from nodes returned to the given node.
+     * Gets a node by its unique identifier.
+     * O(1) operation using index.
+     *
+     * @param id the node ID
+     * @return the node, or empty Optional if not found
      */
-    public ArrayList<Node> getNodesLinkedTo(Node node, String linkName) {
-        ArrayList<Node> nodes = new ArrayList<Node>();
-        int id = node.getID();
-        for (int i = 0; i < m_links.length; ++i) {
-            if (m_links[i].getTargetID() == id && m_links[i].getName().equals(linkName)) {
-                nodes.add(getNodeByID(m_links[i].getSourceID()));
-            }
-        }
-        return nodes;
+    public Optional<Node> getNodeByID(int id) {
+        return Optional.ofNullable(nodeById.get(id));
     }
 
     /**
-     * @param node - node to find relations from.
-     * @param linkName - name of the relation.
-     * @param typeName - name of the type defining node.
-     * @return array of nodes, which are connected with the given one by the relation (link) with given name
-     * and are connected by is_a to the node with given name (say, have given type).
-     * The direction of relation (link) is from the given node to nodes returned.
+     * Gets a link by its unique identifier.
+     * O(1) operation using index.
+     *
+     * @param id the link ID
+     * @return the link, or empty Optional if not found
      */
-    public ArrayList<Node> getTypedNodesLinkedFrom(Node node, String linkName, String typeName) {
-        ArrayList<Node> result = new ArrayList<Node>();
-        ArrayList<Node> linked = getNodesLinkedFrom(node, linkName);
-        for (int i = 0, n = linked.size(); i < n; ++i) {
-            Node lNode = linked.get(i);
-            ArrayList<Node> protos = getNodesLinkedFrom(lNode, "is_a");
-            for (int j = 0, m = protos.size(); j < m; ++j) {
-                if (protos.get(j).getName().equals(typeName)) {
-                    result.add(lNode);
-                    break;
-                }
-            }
-        }
-        return result;
+    public Optional<Link> getLinkByID(int id) {
+        return Optional.ofNullable(linkById.get(id));
     }
 
     /**
-     * @param node - node to find relations to.
-     * @param linkName - name of the relation.
-     * @param typeName - name of the type defining node.
-     * @return array of nodes, which are connected with the given one by the relation (link) with given name
-     * and are connected by is_a to the node with given name (say, have given type).
-     * The direction of relation (link) is from nodes returned to the given node.
+     * Gets all nodes matching a specific name.
+     *
+     * @param name the node name
+     * @return list of matching nodes, or empty list if none found
      */
-    public ArrayList<Node> getTypedNodesLinkedTo(Node node, String linkName, String typeName) {
-        ArrayList<Node> result = new ArrayList<Node>();
-        ArrayList<Node> linked = getNodesLinkedTo(node, linkName);
-        for (int i = 0, n = linked.size(); i < n; ++i) {
-            Node lNode = linked.get(i);
-            ArrayList<Node> protos = getNodesLinkedFrom(lNode, "is_a");
-            for (int j = 0, m = protos.size(); j < m; ++j) {
-                if (protos.get(j).getName().equals(typeName)) {
-                    result.add(lNode);
-                    break;
-                }
-            }
-        }
-        return result;
+    public List<Node> getNodesByName(String name) {
+        Objects.requireNonNull(name, "Name cannot be null");
+        return nodesByName.getOrDefault(name, Collections.emptyList());
     }
 
     /**
-     * @param node - node to check type of.
-     * @param typeName - name of the type defining node.
-     * @return true if node has direct is_a connection with node of given name (say, has given type), false otherwise.
+     * Gets the first node with a specific name.
+     *
+     * @param name the node name
+     * @return the first matching node, or empty Optional if not found
+     */
+    public Optional<Node> getFirstNodeByName(String name) {
+        Objects.requireNonNull(name, "Name cannot be null");
+        List<Node> matching = nodesByName.get(name);
+        return matching != null && !matching.isEmpty()
+                ? Optional.of(matching.get(0))
+                : Optional.empty();
+    }
+
+    /**
+     * Gets all nodes linked FROM the given node with a specific link type.
+     * Direction: given node -> returned nodes
+     *
+     * @param node the source node
+     * @param linkName the link/relation name (e.g., "is_a", "a_part_of")
+     * @return list of nodes, or empty list if none found
+     */
+    public List<Node> getNodesLinkedFrom(Node node, String linkName) {
+        Objects.requireNonNull(node, "Node cannot be null");
+        Objects.requireNonNull(linkName, "Link name cannot be null");
+
+        int nodeId = node.getId();
+        return links.stream()
+                .filter(link -> link.getSourceNodeId() == nodeId && link.isOfType(linkName))
+                .map(link -> getNodeByID(link.getDestinationNodeId()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets all nodes linked TO the given node with a specific link type.
+     * Direction: returned nodes -> given node
+     *
+     * @param node the destination node
+     * @param linkName the link/relation name
+     * @return list of nodes, or empty list if none found
+     */
+    public List<Node> getNodesLinkedTo(Node node, String linkName) {
+        Objects.requireNonNull(node, "Node cannot be null");
+        Objects.requireNonNull(linkName, "Link name cannot be null");
+
+        int nodeId = node.getId();
+        return links.stream()
+                .filter(link -> link.getDestinationNodeId() == nodeId && link.isOfType(linkName))
+                .map(link -> getNodeByID(link.getSourceNodeId()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets typed nodes linked FROM the given node.
+     * Returns only nodes that have a specific type (is_a relation).
+     *
+     * @param node the source node
+     * @param linkName the link/relation name
+     * @param typeName the type name (via is_a relation)
+     * @return list of typed nodes, or empty list if none found
+     */
+    public List<Node> getTypedNodesLinkedFrom(Node node, String linkName, String typeName) {
+        Objects.requireNonNull(node, "Node cannot be null");
+        Objects.requireNonNull(linkName, "Link name cannot be null");
+        Objects.requireNonNull(typeName, "Type name cannot be null");
+
+        return getNodesLinkedFrom(node, linkName).stream()
+                .filter(linkedNode -> isNodeOfTypeRecursive(linkedNode, typeName))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets typed nodes linked TO the given node.
+     * Returns only nodes that have a specific type (is_a relation).
+     *
+     * @param node the destination node
+     * @param linkName the link/relation name
+     * @param typeName the type name (via is_a relation)
+     * @return list of typed nodes, or empty list if none found
+     */
+    public List<Node> getTypedNodesLinkedTo(Node node, String linkName, String typeName) {
+        Objects.requireNonNull(node, "Node cannot be null");
+        Objects.requireNonNull(linkName, "Link name cannot be null");
+        Objects.requireNonNull(typeName, "Type name cannot be null");
+
+        return getNodesLinkedTo(node, linkName).stream()
+                .filter(linkedNode -> isNodeOfTypeRecursive(linkedNode, typeName))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Checks if a node has a specific type (direct is_a relation).
+     *
+     * @param node the node to check
+     * @param typeName the type name
+     * @return true if node has the type, false otherwise
      */
     public boolean isNodeOfType(Node node, String typeName) {
-        ArrayList<Node> protos = getNodesLinkedFrom(node, "is_a");
-        for (int i = 0, n = protos.size(); i < n; ++i) {
-            if (protos.get(i).getName().equals(typeName)) {
-                return true;
-            }
-        }
-        return false;
+        Objects.requireNonNull(node, "Node cannot be null");
+        Objects.requireNonNull(typeName, "Type name cannot be null");
+
+        return getNodesLinkedFrom(node, "is_a").stream()
+                .anyMatch(proto -> proto.getName().equals(typeName));
     }
 
     /**
-     * @param node - node to check type of.
-     * @param typeName - name of the type defining node.
-     * @return true if node has is_a connection with node of given name (say, has given type) at any inheritance level, false otherwise.
+     * Checks if a node has a specific type recursively through is_a hierarchy.
+     *
+     * @param node the node to check
+     * @param typeName the type name
+     * @return true if node has the type at any inheritance level, false otherwise
      */
     public boolean isNodeOfTypeRecursive(Node node, String typeName) {
-        boolean result = false;
-        ArrayList<Node> protos = getNodesLinkedFrom(node, "is_a");
-        for (int i = 0, n = protos.size(); i < n; ++i) {
-            if (protos.get(i).getName().equals(typeName)) {
-                result = true;
-                break;
-            } else {
-                result = isNodeOfTypeRecursive(protos.get(i), typeName);
-            }
-        }
+        Objects.requireNonNull(node, "Node cannot be null");
+        Objects.requireNonNull(typeName, "Type name cannot be null");
 
-        return result;
+        List<Node> protos = getNodesLinkedFrom(node, "is_a");
+
+        return protos.stream()
+                .anyMatch(proto -> proto.getName().equals(typeName) ||
+                        isNodeOfTypeRecursive(proto, typeName));
     }
 
     /**
-     * @param node - node to check type of.
-     * @param linkName - name of the relation.
-     * @param typeName - name of the type defining node.
-     * @return true if node has connection (link) with given name with another node,
-     * which is connected by is_a to the node with given name (say, has given type) at any inheritance level, false otherwise.
-     * The direction of relation (link) is from the given node to nodes returned.
+     * Checks if a node has a specific type through outgoing links.
+     *
+     * @param node the node to check
+     * @param linkName the link/relation name
+     * @param typeName the type name
+     * @return true if any node linked from this node has the type, false otherwise
      */
     public boolean isNodeOfTypeRecursiveFrom(Node node, String linkName, String typeName) {
-        boolean result = false;
-        ArrayList<Node> linked = getNodesLinkedFrom(node, linkName);
-        for (int i = 0, n = linked.size(); i < n; ++i) {
-            Node lNode = linked.get(i);
-            if (isNodeOfTypeRecursive(lNode, typeName)) {
-                result = true;
-                break;
-            }
-        }
+        Objects.requireNonNull(node, "Node cannot be null");
+        Objects.requireNonNull(linkName, "Link name cannot be null");
+        Objects.requireNonNull(typeName, "Type name cannot be null");
 
-        return result;
+        return getNodesLinkedFrom(node, linkName).stream()
+                .anyMatch(linkedNode -> isNodeOfTypeRecursive(linkedNode, typeName));
     }
 
     /**
-     * @param node - node to check type of.
-     * @param linkName - name of the relation.
-     * @param typeName - name of the type defining node.
-     * @return true if node has connection (link) with given name with another node,
-     * which is connected by is_a to the node with given name (say, has given type) at any inheritance level, false otherwise.
-     * The direction of relation (link) is from nodes returned to the given node.
+     * Checks if a node has a specific type through incoming links.
+     *
+     * @param node the node to check
+     * @param linkName the link/relation name
+     * @param typeName the type name
+     * @return true if any node linked to this node has the type, false otherwise
      */
     public boolean isNodeOfTypeRecursiveTo(Node node, String linkName, String typeName) {
-        boolean result = false;
-        ArrayList<Node> linked = getNodesLinkedTo(node, linkName);
-        for (int i = 0, n = linked.size(); i < n; ++i) {
-            Node lNode = linked.get(i);
-            if (isNodeOfTypeRecursive(lNode, typeName)) {
-                result = true;
-                break;
-            }
-        }
+        Objects.requireNonNull(node, "Node cannot be null");
+        Objects.requireNonNull(linkName, "Link name cannot be null");
+        Objects.requireNonNull(typeName, "Type name cannot be null");
 
-        return result;
+        return getNodesLinkedTo(node, linkName).stream()
+                .anyMatch(linkedNode -> isNodeOfTypeRecursive(linkedNode, typeName));
     }
 
     /**
-     * @param node - node to get attribute's value of.
-     * @param name - name of the attribute.
-     * @return value of the requested attribute of the given node, taking into account the inheritance.
-     * The inheritance means that if given node has no attribute requested, it is going to be searched upwards by the
-     * is_a links. If the entire hierarchy of nodes contains no attribute with the given name, null is returned.
+     * Gets an inherited attribute value, searching up the is_a hierarchy.
+     *
+     * @param node the node to get attribute from
+     * @param attributeName the attribute name
+     * @return the attribute value, or null if not found in hierarchy
      */
-    public String getInheritedAttributeOfNode(Node node, String name) {
-        String result = node.getUniqueAttribute(name);
-        if (result != null)
-            return result;
-        ArrayList<Node> protos = getNodesLinkedFrom(node, "is_a");
-        for (int i = 0, n = protos.size(); i < n; ++i) {
-            result = getInheritedAttributeOfNode(protos.get(i), name);
-            if (result != null)
-                return result;
+    public String getInheritedAttributeOfNode(Node node, String attributeName) {
+        Objects.requireNonNull(node, "Node cannot be null");
+        Objects.requireNonNull(attributeName, "Attribute name cannot be null");
+
+        // Сначала проверяем сам узел
+        Optional<String> ownAttribute = node.getUniqueAttribute(attributeName);
+        if (ownAttribute.isPresent()) {
+            return ownAttribute.get();
         }
+
+        // Затем ищем в прототипах (is_a)
+        List<Node> protos = getNodesLinkedFrom(node, "is_a");
+        for (Node proto : protos) {
+            String inheritedValue = getInheritedAttributeOfNode(proto, attributeName);
+            if (inheritedValue != null) {
+                return inheritedValue;
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * Gets statistics about the ontology.
+     *
+     * @return a string with ontology statistics
+     */
+    public String getStatistics() {
+        return String.format(
+                "Ontology Statistics:\n" +
+                        "  Total Nodes: %d\n" +
+                        "  Total Links: %d\n" +
+                        "  Unique Node Names: %d",
+                nodes.size(),
+                links.size(),
+                nodesByName.size()
+        );
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Onto{nodes=%d, links=%d}", nodes.size(), links.size());
     }
 }
