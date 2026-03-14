@@ -11,7 +11,7 @@ import ru.sg.services.OntoService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/onto")
+@RequestMapping("/api/v1/onto")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "${app.onto.cors.allowed-origins:http://localhost:9000}")
 public class OntoController {
@@ -19,11 +19,11 @@ public class OntoController {
     private final OntoService ontoService;
 
     @Value("${app.onto.start-node-name:#Старт}")
-    private String firstNode;
+    private String startNodeName;
 
     @GetMapping
-    public ResponseEntity<List<OntoResponse>> getFirstNode() {
-        List<OntoResponse> ontoList = ontoService.firstNodeByName(firstNode);
+    public ResponseEntity<List<OntoResponse>> getStartNodeName() {
+        List<OntoResponse> ontoList = ontoService.firstNodeByName(startNodeName);
         return new ResponseEntity<>(ontoList, HttpStatus.OK);
     }
 

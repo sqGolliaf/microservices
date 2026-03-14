@@ -21,7 +21,7 @@ public class OntoExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<ApiException> handleException(Exception ex) {
+    public ResponseEntity<ApiException> handleException(Exception ex, WebRequest req) {
         log.error("Unexpected error occurred", ex);
 
         ApiException error = new ApiException(
@@ -36,7 +36,7 @@ public class OntoExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<ApiException> handleNotFoundException(NotFoundException ex) {
+    public ResponseEntity<ApiException> handleNotFoundException(NotFoundException ex, WebRequest req) {
         log.warn("Resource not found: {}", ex.getMessage());
 
         ApiException error = new ApiException(
@@ -51,7 +51,7 @@ public class OntoExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ApiException> handleIllegalArgumentException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiException> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest req) {
         log.warn("Invalid argument: {}", ex.getMessage());
 
         ApiException error = new ApiException(

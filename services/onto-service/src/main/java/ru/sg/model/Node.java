@@ -35,7 +35,6 @@ public class Node {
      * -- GETTER --
      *  Gets the unique identifier of this node.
      *
-     * @return the node ID
      */
     @JsonProperty("id")
     private final int id;
@@ -44,7 +43,6 @@ public class Node {
      * -- GETTER --
      *  Gets the name of this node.
      *
-     * @return the node name, or empty string if not defined
      */
     @JsonProperty("name")
     private final String name;
@@ -57,7 +55,6 @@ public class Node {
      *  Gets the runtime storage for this node.
      *  Thread-safe map for storing computed or temporary data.
      *
-     * @return mutable thread-safe storage map
      */
     // Thread-safe runtime storage for computed data
     private final Map<String, Object> storage;
@@ -75,7 +72,7 @@ public class Node {
      */
     public Node(JsonNode nodeData, Onto onto) {
         this.id = validateAndGetInt(nodeData, FIELD_ID, "Node ID");
-        this.name = nodeData.has(FIELD_NAME) ? nodeData.get(FIELD_NAME).asText() : EMPTY_NAME;
+        this.name = nodeData.has(FIELD_NAME) ? nodeData.get(FIELD_NAME).asString() : EMPTY_NAME;
         this.attributes = parseAttributes(nodeData);
         this.storage = new ConcurrentHashMap<>();
         this.onto = onto;
