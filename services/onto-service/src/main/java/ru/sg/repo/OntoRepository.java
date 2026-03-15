@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Repository;
-import ru.sg.models.Onto;
+import ru.sg.model.Onto;
 
 import java.io.IOException;
 

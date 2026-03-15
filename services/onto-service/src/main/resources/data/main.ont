@@ -11187,7 +11187,7 @@
         },
         {
             "attributes": {
-                "finalyze": "true"
+                "finalize": "true"
             },
             "id": "21",
             "name": "Книги",
@@ -11246,7 +11246,7 @@
         },
         {
             "attributes": {
-                "finalyze": "true"
+                "finalize": "true"
             },
             "id": "177",
             "name": "Журналы и газеты",
@@ -11326,7 +11326,7 @@
         },
         {
             "attributes": {
-                "finalyze": "true"
+                "finalize": "true"
             },
             "id": "213",
             "name": "Монографии",

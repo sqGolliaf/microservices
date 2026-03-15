@@ -18,10 +18,10 @@ public interface OntoMapper {
         return node.getName();
     }
 
-    @Named("mapFinalyze")
-    default String mapFinalyze(Node node) {
-        if (node.getAttribute("finalyze").isPresent()) {
-            return node.getAttribute("finalyze").get();
+    @Named("mapFinalize")
+    default String mapFinalize(Node node) {
+        if (node.getAttribute("finalize").isPresent()) {
+            return node.getAttribute("finalize").get();
         }
         if (node.getAttribute("text").isPresent()) {
             return node.getAttribute("text").get();

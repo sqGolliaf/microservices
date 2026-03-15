@@ -43,6 +43,9 @@ payment:
       batch-size: 10
       max-retries: 5
 
+users:
+  url: ${USER_SERVICE:http://localhost:8081}
+
 logging:
   level:
     ru.sg: INFO

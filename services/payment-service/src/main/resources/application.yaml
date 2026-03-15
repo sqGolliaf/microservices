@@ -18,10 +18,12 @@ spring:
       acks: all
       retries: 3
       compression-type: snappy
+
   data:
     redis:
       host: ${DATA_REDIS_HOST:localhost}
       port: ${DATA_REDIS_PORT:6379}
       timeout: ${DATA_REDIS_TIMEOUT:10000}
+
 server:
   port: ${SERVER_PORT:8082}

@@ -41,14 +41,14 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, UUID> 
     @Query("""
                     update OutboxEvent e
                     set e.status = 'ERROR',
-                        e.retryCount = e.retryCount - 1,
+                        e.retryCount = e.retryCount + 1,
                         e.nextRetryAt = :nextRetry,
                         e.errorMessage = :error
                     where e.id = :id
             """)
-    void markAsError(@Param("id") UUID id, @Param("nextRetry") Instant nextRetry, @Param("error") String error);
+    void markAsError(UUID id, Instant nextRetry, String error);
 
     @Modifying
-    @Query("update OutboxEvent e set e.status = 'FAILED' where e.id = :id")
+    @Query("UPDATE OutboxEvent e set e.status = 'FAILED' where e.id = :id")
     void markAsFailed(@Param("id") UUID id);
 }

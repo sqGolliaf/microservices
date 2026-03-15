@@ -102,7 +102,12 @@ public class DLQService {
     @Transactional
     public void cleanupResolvedEvents(Instant olderThan) {
         List<DLQEvent> events = dlqEventRepository.findByCreatedAtBeforeAndIsResolvedTrue(olderThan);
-        dlqEventRepository.deleteAll();
+        if (events.isEmpty()) {
+            log.debug("No resolved DLQ events found older than {}", olderThan);
+            return;
+        }
+
+        dlqEventRepository.deleteAll(events);
         log.info("Cleaned up {} resolved DLQ events", events.size());
     }
 

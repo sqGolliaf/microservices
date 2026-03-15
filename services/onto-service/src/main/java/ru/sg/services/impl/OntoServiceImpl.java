@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OntoServiceImpl implements OntoService {
 
-    private static final String ATTR_FINALIZED = "finalyze";
+    private static final String ATTR_FINALIZED = "finalize";
     private static final String LINK_IS_A = "is_a";
     private static final String LINK_PATH_OF = "a_path_of";
     private static final String LINK_POSITION = "position";

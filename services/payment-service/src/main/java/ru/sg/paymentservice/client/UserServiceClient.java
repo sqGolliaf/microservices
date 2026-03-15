@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import ru.sg.paymentservice.dto.request.CreditRequest;
 import ru.sg.paymentservice.dto.request.DebitRequest;
 
-@FeignClient(name = "user-service", url = "http://localhost:8081")
+@FeignClient(
+        name = "user-service",
+        url = "${users.url}")
 public interface UserServiceClient {
 
     @PostMapping("/users/{keycloakId}/debit")
