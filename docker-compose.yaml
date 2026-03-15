@@ -65,7 +65,7 @@ services:
       KC_HEALTH_ENABLED: "true"
     healthcheck:
       test:
-        [ "CMD-SHELL", "{ exec 3<>/dev/tcp/localhost/9000 && echo -e \"GET /health/ready HTTP/1.1\nhost: localhost:9000\n\" >&3 && timeout --preserve-status 1 cat <&3 | grep -m 1 -q 'status.*UP'; }" ]
+        [ "CMD-SHELL", "exec 3<>/dev/tcp/localhost/9080 && echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost:9080\r\n' >&3 && timeout --preserve-status 2 cat <&3 | grep -m 1 -q 'status.*UP'" ]
       interval: 10s
       timeout: 5s
       start_period: 60s

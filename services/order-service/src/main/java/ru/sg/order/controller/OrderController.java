@@ -12,7 +12,7 @@ import ru.sg.order.dto.response.OrderResponse;
 import ru.sg.order.service.OrderService;
 
 @RestController
-@RequestMapping("/orders")
+@RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
 @Slf4j
 public class OrderController {

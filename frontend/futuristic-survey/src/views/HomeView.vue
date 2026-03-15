@@ -80,7 +80,7 @@ const nextQuestion = () => {
 
 const fetchQuestionsMain = async () => {
   try {
-    const response = await fetch('http://localhost:8080/')
+    const response = await fetch('http://localhost:9000/api/v1/onto/')
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
     const data = await response.json()
     if (Array.isArray(data) && data.length > 0) {
@@ -108,7 +108,7 @@ const fetchQuestion = async (id, att) => {
 
 const fetchQuestionsToIs = async (id) => {
   try {
-    const response = await fetch(`http://localhost:8080/to/${id}`)
+    const response = await fetch(`http://localhost:9000/api/v1/onto/to/${id}`)
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
     const data = await response.json()
     if (Array.isArray(data) && data.length > 0) {
@@ -131,7 +131,7 @@ const fetchQuestionsToIs = async (id) => {
 const fetchQuestionsToPath = async (id) => {
   try {
     dataLoaded.value = false
-    const response = await fetch(`http://localhost:8080/path/${id}`)
+    const response = await fetch(`http://localhost:9000/api/v1/onto/path/${id}`)
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
     const data = await response.json()
     if (Array.isArray(data) && data.length > 0) {
@@ -163,7 +163,7 @@ const selectOption = (currentQuestionIndex, question) => {
 
 const submitRes = async () => {
   try {
-    const response = await fetch('http://localhost:8080/save', {
+    const response = await fetch('http://localhost:9000/api/v1/onto/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(responses.value)

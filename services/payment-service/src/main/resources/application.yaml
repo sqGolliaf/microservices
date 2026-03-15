@@ -4,3 +4,24 @@ spring:
 
   profiles:
     active: dev
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      bootstrap-servers: ${KAFKA_CONSUMER_BOOTSTRAP_SERVERS:localhost:29092}
+      group-id: payment-service-group
+      auto-offset-reset: earliest
+      max-poll-records: 100
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      compression-type: snappy
+  data:
+    redis:
+      host: ${DATA_REDIS_HOST:localhost}
+      port: ${DATA_REDIS_PORT:6379}
+      timeout: ${DATA_REDIS_TIMEOUT:10000}
+server:
+  port: ${SERVER_PORT:8082}

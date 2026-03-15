@@ -5,20 +5,4 @@ spring:
     active: dev
 
 server:
-  port: 9000
-logging:
-  level:
-    root: info
-    ru.sg: DEBUG
-
-services:
-  user-services:
-    user-service:
-      url: http://user-service:8080
-      path: /api/v1/users/**
-    order-service:
-      url: http://order-service:8080
-      path: /api/v1/orders/**
-    onto-service:
-      url: http://localhost:8080
-      path: /api/v1/onto/**
+  port: ${SERVER_PORT:9000}

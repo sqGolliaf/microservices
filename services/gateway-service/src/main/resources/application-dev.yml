@@ -1,12 +1,50 @@
 spring:
   security:
     oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:9080/realms/microservices
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: gateway-client
+            client-secret: WZM9u18bCuJVUvTPQXt4rUXab3o1KHXT
+            authorization-grant-type: authorization_code
+            scope:
+              - openid
+              - email
+              - profile
+              - roles
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:9000/realms/microservices
-          jwk-set-uri: http://localhost:9080/realms/microservices/protocol/openid-connect/certs
+          issuer-uri: http://localhost:9080/realms/microservices
 
   data:
     redis:
       host: localhost
       port: 6379
+
+logging:
+  level:
+    root: info
+    ru.sg: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+        exclude: env,beans
+
+services:
+  user-services:
+    user-service:
+      url: http://localhost:8081
+      path: /api/v1/users/**
+    order-service:
+      url: http://localhost:8082
+      path: /api/v1/orders/**
+    onto-service:
+      url: http://localhost:8083
+      path: /api/v1/onto/**

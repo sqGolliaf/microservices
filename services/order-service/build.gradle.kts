@@ -36,6 +36,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-kafka")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-liquibase")
 
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
     implementation("io.github.resilience4j:resilience4j-spring-boot3")
@@ -51,6 +52,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
     testImplementation("org.springframework.boot:spring-boot-starter-kafka-test")
     testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-liquibase-test")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

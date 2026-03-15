@@ -1,18 +1,17 @@
 package ru.sg.gateway.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.servlet.function.*;
-
-import java.util.Map;
-import java.util.function.Function;
-
-import static org.springframework.cloud.gateway.server.mvc.filter.BeforeFilterFunctions.uri;
-import static org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions.route;
-import static org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions.http;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 @Configuration
 @RequiredArgsConstructor
@@ -21,36 +20,55 @@ public class RouteConfig {
     private final ServicesConfig servicesConfig;
 
     @Bean
-    RouterFunction<ServerResponse> gatewayRoutes() {
-        var builder = route("dynamic-services");
+    public RouteLocator gatewayRoutes(RouteLocatorBuilder builder, GatewayFilter addUserHeadersFilter) {
+        RouteLocatorBuilder.Builder routes = builder.routes();
 
-        for (Map.Entry<String, ServicesConfig.ServiceInfo> entry : servicesConfig.getUserServices().entrySet()) {
-            String path = entry.getValue().getPath();
-            String url = entry.getValue().getUrl();
+        servicesConfig.getUserServices().forEach((serviceId, info) ->
+                routes.route(serviceId, r -> r
+                        .path(info.getPath())
+                        .filters(f -> f.filter(addUserHeadersFilter))
+                        .uri(info.getUrl()))
+        );
 
-            builder = builder.route(RequestPredicates.path(path), http())
-                    .before(uri(url))
-                    .before(addUserHeaders());
-        }
-
-        return builder.build();
+        return routes.build();
     }
 
-    private Function<ServerRequest, ServerRequest> addUserHeaders() {
-        return request -> {
-            var auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth instanceof JwtAuthenticationToken jwtAuth) {
-                String userId = jwtAuth.getToken().getSubject();
-                String username = jwtAuth.getToken().getClaim("preferred_username");
-                String email = jwtAuth.getToken().getClaim("email");
+    @Bean
+    public GatewayFilter addUserHeadersFilter() {
+        return (exchange, chain) -> exchange.getPrincipal()
+                .cast(Authentication.class)
+                .flatMap(auth -> mutateExchangeWithUserHeaders(exchange, auth)
+                        .flatMap(chain::filter))
+                .switchIfEmpty(chain.filter(exchange));
+    }
 
-                return ServerRequest.from(request)
-                        .header("X-USER-ID", userId)
-                        .header("X-USERNAME", username)
-                        .header("X-EMAIL", email)
-                        .build();
+    private Mono<ServerWebExchange> mutateExchangeWithUserHeaders(ServerWebExchange exchange, Authentication authentication) {
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            Jwt jwt = jwtAuth.getToken();
+
+            String userId = jwt.getSubject();
+            String username = jwt.getClaimAsString("preferred_username");
+            String email = jwt.getClaimAsString("email");
+
+            ServerHttpRequest.Builder requestBuilder = exchange.getRequest().mutate();
+
+            if (userId != null) {
+                requestBuilder.header("X-USER-ID", userId);
             }
-            return request;
-        };
+            if (username != null) {
+                requestBuilder.header("X-USERNAME", username);
+            }
+            if (email != null) {
+                requestBuilder.header("X-EMAIL", email);
+            }
+
+            ServerWebExchange mutatedExchange = exchange.mutate()
+                    .request(requestBuilder.build())
+                    .build();
+
+            return Mono.just(mutatedExchange);
+        }
+
+        return Mono.just(exchange);
     }
 }

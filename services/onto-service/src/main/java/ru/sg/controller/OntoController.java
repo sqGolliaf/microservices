@@ -10,9 +10,9 @@ import ru.sg.services.OntoService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/onto")
+@RequestMapping("/api/v1/onto")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:9000")
+@CrossOrigin(origins = "${app.onto.cross-origin:http://localhost:9000}")
 public class OntoController {
 
     private final OntoService ontoService;

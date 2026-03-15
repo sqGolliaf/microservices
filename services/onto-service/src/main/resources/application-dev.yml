@@ -4,9 +4,7 @@ spring:
   jpa:
     defer-datasource-initialization: false
 
-file:
+app:
   onto:
     url: classpath:data/main.ont
-
-accounts:
-  admin: admin
+    cross-origin: http://localhost:9000

@@ -31,7 +31,7 @@ spring:
       compression-type: snappy
 
   liquibase:
-    change-log: classpath:/db/changelog/db.changelog-master.yaml
+    enabled: false
 
   cloud:
     openfeign:

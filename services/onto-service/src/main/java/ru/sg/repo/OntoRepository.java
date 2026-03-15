@@ -12,7 +12,7 @@ import java.io.IOException;
 public class OntoRepository {
 
     @Bean
-    public Onto dataOnto(@Value("${file.onto.url}") Resource resource) throws IOException {
+    public Onto dataOnto(@Value("${app.onto.url:data/main.ont}") Resource resource) throws IOException {
         return new Onto(resource.getInputStream());
     }
 }
