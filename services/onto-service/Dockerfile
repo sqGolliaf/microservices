@@ -1,28 +1,32 @@
-# Stage: extract Spring Boot application layers
+# Stage 1: Extract Spring Boot application layers
 FROM bellsoft/liberica-openjre-alpine:21-cds AS layers
 WORKDIR /application
-COPY appPspu/build/libs/*.jar app.jar
+COPY build/libs/*.jar app.jar
 RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
 
-# Stage: final runtime image
+# Stage 2: Final runtime image
 FROM bellsoft/liberica-openjre-alpine:21-cds
+
+LABEL maintainer="sqGolliaf"
+LABEL description="Ontology Service Microservice"
 
 VOLUME /tmp
 
 # Configure non-root user
-RUN adduser -S user
-USER user
+RUN adduser -S -D -H -s /sbin/nologin appuser
+USER appuser
 
 WORKDIR /application
 
 # Copy Spring Boot application layers
-COPY --from=layers /application/extracted/dependencies/ ./
-COPY --from=layers /application/extracted/spring-boot-loader/ ./
-COPY --from=layers /application/extracted/snapshot-dependencies/ ./
-COPY --from=layers /application/extracted/application/ ./
+COPY --from=layers --chown=appuser:appuser /application/extracted/dependencies/ ./
+COPY --from=layers --chown=appuser:appuser /application/extracted/spring-boot-loader/ ./
+COPY --from=layers --chown=appuser:appuser /application/extracted/snapshot-dependencies/ ./
+COPY --from=layers --chown=appuser:appuser /application/extracted/application/ ./
 
-# Generate CDS archive
-RUN java -XX:ArchiveClassesAtExit=app.jsa -Dspring.context.exit=onRefresh -jar app.jar || true
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD java -cp /application org.springframework.boot.loader.JarLauncher || exit 1
 
 # JVM options
 ENV JAVA_CDS_OPTS="-XX:SharedArchiveFile=app.jsa -Xlog:class+load:file=/tmp/classload.log"
