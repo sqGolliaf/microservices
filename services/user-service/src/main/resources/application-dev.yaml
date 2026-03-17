@@ -14,3 +14,24 @@ spring:
       host: redis
       port: 6379
       timeout: 2000
+
+  kafka:
+    bootstrap-servers: localhost:29092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: user-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "ru.sg.user.event"
+
+    topics:
+      user-registered: user-events
+
+keycloak:
+  server-url: http://localhost:9080
+  realm: microservices
+  client-id: gateway-client
+  client-secret: WZM9u18bCuJVUvTPQXt4rUXab3o1KHXT
