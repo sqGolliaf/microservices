@@ -1,5 +1,6 @@
 package ru.sg.user.config;
 
+import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +20,7 @@ public class KeycloakConfig {
                 realm,
                 clientId,
                 clientSecret,
-                "admin-cli"
+                OAuth2Constants.CLIENT_CREDENTIALS
         );
     }
 }
