@@ -10,12 +10,9 @@ public class UserMapper {
     public UserResponse toResponse(
             User user,
             String email,
-            String username,
-            String keycloakId
+            String username
     ) {
         return new UserResponse(
-                user.getId(),
-                keycloakId,
                 email,
                 username,
                 user.getBalance(),

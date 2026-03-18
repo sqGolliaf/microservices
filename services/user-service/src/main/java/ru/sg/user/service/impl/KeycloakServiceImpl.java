@@ -5,8 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.resource.RealmResource;
-import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -15,6 +13,8 @@ import org.springframework.stereotype.Service;
 import ru.sg.user.dto.request.event.RegistrationRequest;
 import ru.sg.user.exception.RegistrationException;
 import ru.sg.user.exception.UserAlreadyExistsException;
+import ru.sg.user.exception.UserInvalidCredentialsException;
+import ru.sg.user.exception.UserNotFoundException;
 import ru.sg.user.service.KeycloakService;
 
 import java.util.List;
@@ -29,11 +29,12 @@ public class KeycloakServiceImpl implements KeycloakService {
     @Value("${keycloak.realm}")
     private String realm;
 
-    @Value("${keycloak.server-url}")
-    private String serverUrl;
+    private UsersResource users() {
+        return keycloak.realm(realm).users();
+    }
 
     @Override
-    public UserRepresentation registerUserInKeycloak(RegistrationRequest request) throws RegistrationException {
+    public UserRepresentation registerUser(RegistrationRequest request) {
         try {
             UserRepresentation user = new UserRepresentation();
             user.setUsername(request.getUsername());
@@ -41,14 +42,14 @@ public class KeycloakServiceImpl implements KeycloakService {
             user.setFirstName(request.getFirstName());
             user.setLastName(request.getLastName());
             user.setEnabled(true);
+            user.setEmailVerified(false);
 
-            RealmResource realmResource = keycloak.realm(realm);
-            UsersResource usersResource = realmResource.users();
+            List<UserRepresentation> byUsername = users().search(request.getUsername(), 0, 1);
+            List<UserRepresentation> byEmail = users().searchByEmail(request.getEmail(), true);
+            if (!byUsername.isEmpty() || !byEmail.isEmpty())
+                throw new UserAlreadyExistsException("User already exists");
 
-            List<UserRepresentation> existing = usersResource.search(request.getUsername(), 0, 1);
-            if (!existing.isEmpty()) throw new UserAlreadyExistsException("Username already exists");
-
-            Response response = usersResource.create(user);
+            Response response = users().create(user);
             if (response.getStatus() != 201) throw new RegistrationException("Failed to create user in Keycloak");
 
             String keycloakId = CreatedResponseUtil.getCreatedId(response);
@@ -58,11 +59,11 @@ public class KeycloakServiceImpl implements KeycloakService {
             passwordCred.setValue(request.getPassword());
             passwordCred.setTemporary(false);
 
-            UserResource userResource = usersResource.get(keycloakId);
-            userResource.resetPassword(passwordCred);
+            users().get(keycloakId).resetPassword(passwordCred);
 
-            log.info("User registered in Keycloak: {} (id: {})", request.getUsername(), keycloakId);
-            return userResource.toRepresentation();
+            log.info("User registered in Keycloak: {} (id: {})", user.getUsername(), keycloakId);
+            user.setId(keycloakId);
+            return user;
         } catch (Exception e) {
             log.error("Error registering user in Keycloak", e);
             throw new RegistrationException(e.getMessage());
@@ -70,20 +71,30 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
-    public boolean validateUserCredentials(String username, String password) {
+    public String login(String username, String password) {
         try {
-            Keycloak userKeycloak = Keycloak.getInstance(
-                    serverUrl,
-                    realm,
-                    username,
-                    password,
-                    "frontend-client"
-            );
-
-            return true;
+            return keycloak.tokenManager().getAccessTokenString();
         } catch (Exception e) {
-            log.debug("Authentication failed for user: {}", username);
-            return false;
+            throw new UserInvalidCredentialsException("Invalid username or password");
+        }
+    }
+
+    @Override
+    public void sendVerifyEmail(String userId) {
+        try {
+            users().get(userId).sendVerifyEmail();
+            log.info("Verification email sent to user: {}", userId);
+        } catch (Exception e) {
+            log.error("Failed to send verification email", e);
+        }
+    }
+
+    @Override
+    public UserRepresentation getUserById(String userId) {
+        try {
+            return users().get(userId).toRepresentation();
+        } catch (Exception e) {
+            throw new UserNotFoundException("User not found in Keycloak");
         }
     }
 }

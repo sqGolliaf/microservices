@@ -6,7 +6,8 @@ import ru.sg.user.exception.RegistrationException;
 
 public interface KeycloakService {
 
-    UserRepresentation registerUserInKeycloak(RegistrationRequest request) throws RegistrationException;
-    boolean validateUserCredentials(String username, String password);
-
+    UserRepresentation registerUser(RegistrationRequest request) throws RegistrationException;
+    void sendVerifyEmail(String userId);
+    UserRepresentation getUserById(String userId);
+    String login(String username, String password);
 }

@@ -73,39 +73,6 @@ services:
     depends_on:
       - broker
 
-#  order-service:
-#    image: microservices.order-service:latest
-#    build:
-#      context: services/order-service/
-#      dockerfile: Dockerfile
-#    restart: "no"
-#    ports:
-#      - "8080:8080"
-#    environment:
-#      SPRING_PROFILES_ACTIVE: prod
-#      SERVER_ADDRESS: "0.0.0.0"
-#      my.datasource.url: jdbc:postgresql://db:5432/order
-#      my.datasource.username: admin
-#      my.datasource.password: admin
-#
-#      my.broker.bootstrap-servers: broker:9092
-#      my.broker.consume.bootstrap-servers: broker:9092
-#      my.broker.consumers.group-id: order-service-group
-#
-#      my.logging.level: INFO
-#      my.logging.spring.level: INFO
-#
-#      my.order.events.topic.name: order-events
-#      my.order.events.outbox.max-retries: 5
-#      my.order.events.outbox.batch-size: 50
-#
-#      my.saga.timeout-minutes: 10
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#      broker:
-#        condition: service_started
-
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
     environment:
@@ -152,6 +119,12 @@ services:
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
 volumes:
   kafka-data:

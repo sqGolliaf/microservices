@@ -1,7 +1,5 @@
 package ru.sg.user.event;
 
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,15 +19,4 @@ public class UserRegisteredEvent {
     private String lastName;
     private Instant registeredAt;
     private Instant updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        registeredAt = Instant.now();
-        updatedAt = Instant.now();
-    }
-
-    @PreUpdate
-    protected void onUpdated() {
-        updatedAt = Instant.now();
-    }
 }

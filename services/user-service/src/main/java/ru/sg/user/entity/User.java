@@ -22,14 +22,8 @@ public class User {
     @Column(name = "keycloak_id", nullable = false, unique = true, length = 36)
     private String keycloakId;
 
-    @Column(name = "username", nullable = false, unique = true, length = 50)
-    private String username;
-
     @Column(name = "balance", nullable = false)
     private BigDecimal balance;
-
-    @Column(name = "email", nullable = false)
-    private String email;
 
     @Column(name = "tier", nullable = false, length = 50)
     @Builder.Default
@@ -37,6 +31,10 @@ public class User {
 
     @Column(name = "preferences", columnDefinition = "TEXT")
     private String preferences;
+
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private boolean emailVerified = false;
 
     @Column(name = "create_at", nullable = false, updatable = false)
     private Instant createdAt;
