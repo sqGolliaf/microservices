@@ -43,7 +43,7 @@ public class KeycloakServiceImpl implements KeycloakService {
             user.setEmail(request.getEmail());
             user.setFirstName(request.getFirstName());
             user.setLastName(request.getLastName());
-            user.setEnabled(true);
+            user.setEnabled(false);
             user.setEmailVerified(false);
 
             List<UserRepresentation> byUsername = users().search(request.getUsername())
@@ -91,25 +91,41 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
-    public UserRepresentation getUserById(String userId) {
+    public UserRepresentation getUserById(String keycloakId) {
         try {
-            return users().get(userId).toRepresentation();
+            return users().get(keycloakId).toRepresentation();
         } catch (Exception e) {
             throw new UserNotFoundException("User not found in Keycloak");
         }
     }
 
     @Override
-    public void deleteUser(String userId) {
+    public void deleteUser(String keycloakId) {
         try {
-            users().get(userId).remove();
+            users().get(keycloakId).remove();
 
-            log.info("User delete from Keycloak: {}", userId);
+            log.info("User delete from Keycloak: {}", keycloakId);
         } catch (NotFoundException e) {
-            log.warn("User not found in Keycloak: {}", userId);
+            log.warn("User not found in Keycloak: {}", keycloakId);
         } catch (Exception e) {
-            log.error("Failed to delete user from Keycloak: {}", userId, e);
+            log.error("Failed to delete user from Keycloak: {}", keycloakId, e);
             throw new RuntimeException("Failed to delete user in Keycloak", e); // Переделать на кастомную ошибку
         }
+    }
+
+    @Override
+    public void enableUser(String keycloakId) {
+        UserResource userResource = users().get(keycloakId);
+        UserRepresentation user = userResource.toRepresentation();
+        user.setEnabled(true);
+        userResource.update(user);
+    }
+
+    @Override
+    public void setEmailVerified(String keycloakId, boolean active) {
+        UserResource userResource = users().get(keycloakId);
+        UserRepresentation user = userResource.toRepresentation();
+        user.setEmailVerified(true);
+        userResource.update(user);
     }
 }

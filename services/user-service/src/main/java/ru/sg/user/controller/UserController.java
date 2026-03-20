@@ -26,6 +26,12 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/verify-email")
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+        userService.verifyEmail(token);
+        return ResponseEntity.ok("Email is verified");
+    }
+
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMe(@RequestHeader("X-USER-ID") String keycloakId) {
         return ResponseEntity.ok(userService.getCurrentUser(keycloakId));

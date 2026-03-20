@@ -2,16 +2,17 @@ package ru.sg.user.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.sg.user.dto.request.TokenResponse;
 import ru.sg.user.dto.request.event.RegistrationRequest;
 import ru.sg.user.dto.response.UserResponse;
 import ru.sg.user.entity.User;
 import ru.sg.user.event.UserRegisteredEvent;
+import ru.sg.user.exception.TokenExpiredException;
 import ru.sg.user.exception.UserNotFoundException;
 import ru.sg.user.exception.UserNotPositiveAmount;
 import ru.sg.user.mapper.UserMapper;
@@ -21,6 +22,8 @@ import ru.sg.user.service.UserService;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -43,9 +46,13 @@ public class UserServiceImpl implements UserService {
         try {
             keycloakUser = keycloakService.registerUser(request);
 
+            String token = UUID.randomUUID().toString();
+
             User user = User.builder()
                     .keycloakId(keycloakUser.getId())
                     .balance(BigDecimal.ZERO)
+                    .verificationToken(token)
+                    .tokenExpireDate(Instant.now().plus(1, ChronoUnit.DAYS))
                     .tier("STANDARD")
                     .build();
 
@@ -107,6 +114,20 @@ public class UserServiceImpl implements UserService {
     private void validateAmount(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Amount must be positive");
+    }
+
+    @Override
+    public void verifyEmail(String token) {
+        User user = userRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid token"));
+
+        if (user.getTokenExpireDate().isBefore(Instant.now())) throw new TokenExpiredException("Token expired");
+
+        user.setVerificationToken(null);
+        userRepository.save(user);
+
+        keycloakService.enableUser(user.getKeycloakId());
+        keycloakService.setEmailVerified(user.getKeycloakId(), true);
     }
 
     private void sendEvent(RegistrationRequest request, UserRepresentation user) {

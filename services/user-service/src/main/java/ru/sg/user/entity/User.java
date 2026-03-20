@@ -25,6 +25,12 @@ public class User {
     @Column(name = "balance", nullable = false)
     private BigDecimal balance;
 
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "token_expiry_date")
+    private Instant tokenExpireDate;
+
     @Column(name = "tier", nullable = false, length = 50)
     @Builder.Default
     private String tier = "STANDARD";

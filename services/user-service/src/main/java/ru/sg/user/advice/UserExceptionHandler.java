@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.sg.user.exception.EmailAlreadyExistsException;
 import ru.sg.user.exception.RegistrationException;
+import ru.sg.user.exception.TokenExpiredException;
 import ru.sg.user.exception.UserAlreadyExistsException;
 
 @RestControllerAdvice
@@ -20,5 +21,10 @@ public class UserExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<String> handleInvalidAuthentication(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(TokenExpiredException.class)
+    public ResponseEntity<String> handleTokenExpired(TokenExpiredException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 }

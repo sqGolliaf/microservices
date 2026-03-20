@@ -11,6 +11,8 @@ public interface UserService {
 
     UserResponse getCurrentUser(String keycloakId);
 
+    void verifyEmail(String token);
+
     void debit(String keycloakId, BigDecimal amount);
 
     void credit(String keycloakId, BigDecimal amount);
