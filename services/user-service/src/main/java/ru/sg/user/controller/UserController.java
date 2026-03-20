@@ -7,8 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.sg.user.dto.request.CreditRequest;
 import ru.sg.user.dto.request.DebitRequest;
-import ru.sg.user.dto.request.TokenResponse;
-import ru.sg.user.dto.request.event.LoginRequest;
 import ru.sg.user.dto.request.event.RegistrationRequest;
 import ru.sg.user.dto.response.UserResponse;
 import ru.sg.user.service.UserService;

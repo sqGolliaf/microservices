@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import ru.sg.user.dto.request.event.RegistrationRequest;
 import ru.sg.user.exception.RegistrationException;
 import ru.sg.user.exception.UserAlreadyExistsException;
-import ru.sg.user.exception.UserInvalidCredentialsException;
 import ru.sg.user.exception.UserNotFoundException;
 import ru.sg.user.service.KeycloakService;
 
