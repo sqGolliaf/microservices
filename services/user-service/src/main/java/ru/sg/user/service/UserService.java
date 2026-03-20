@@ -14,6 +14,4 @@ public interface UserService {
     void debit(String keycloakId, BigDecimal amount);
 
     void credit(String keycloakId, BigDecimal amount);
-
-    String login(String username, String password);
 }

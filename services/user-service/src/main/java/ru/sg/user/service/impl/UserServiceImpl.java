@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.sg.user.dto.request.TokenResponse;
 import ru.sg.user.dto.request.event.RegistrationRequest;
 import ru.sg.user.dto.response.UserResponse;
 import ru.sg.user.entity.User;
@@ -33,42 +34,36 @@ public class UserServiceImpl implements UserService {
     private final KafkaTemplate<String, UserRegisteredEvent> kafkaTemplate;
 
     @Value("${spring.kafka.topics.user-registered}")
-    private String userRegisteredTopic;
+    private String topic;
 
     @Override
     public UserResponse register(RegistrationRequest request) {
-        UserRepresentation keycloakUser = keycloakService.registerUser(request);
+        UserRepresentation keycloakUser = null;
 
-        User user = User.builder()
-                .keycloakId(keycloakUser.getId())
-                .balance(BigDecimal.ZERO)
-                .tier("STANDARD")
-                .build();
+        try {
+            keycloakUser = keycloakService.registerUser(request);
 
-        User savedUser = userRepository.save(user);
+            User user = User.builder()
+                    .keycloakId(keycloakUser.getId())
+                    .balance(BigDecimal.ZERO)
+                    .tier("STANDARD")
+                    .build();
 
-        keycloakService.sendVerifyEmail(keycloakUser.getId());
+            User savedUser = userRepository.save(user);
 
-        UserRegisteredEvent event = UserRegisteredEvent.builder()
-                .keycloakId(keycloakUser.getId())
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .registeredAt(Instant.now())
-                .updatedAt(Instant.now())
-                .build();
+            keycloakService.sendVerifyEmail(keycloakUser.getId());
 
-        kafkaTemplate.send(userRegisteredTopic, event);
-        log.info("User registered successfully: {} (keycloakId: {})",
-                request.getUsername(), keycloakUser.getId());
+            sendEvent(request, keycloakUser);
 
-        return userMapper.toResponse(savedUser, keycloakUser.getEmail(),  keycloakUser.getUsername());
-    }
+            log.info("User registered successfully: {} (keycloakId: {})",
+                    request.getUsername(), keycloakUser.getId());
 
-    @Override
-    public String login(String username, String password) {
-        return keycloakService.login(username, password);
+            return userMapper.toResponse(savedUser, keycloakUser.getEmail(), keycloakUser.getUsername());
+        } catch (Exception e) {
+            if (keycloakUser != null) keycloakService.deleteUser(keycloakUser.getId());
+            log.error("User is not save, exception: ", e);
+            throw e;
+        }
     }
 
     @Override
@@ -84,10 +79,13 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void debit(String keycloakId, BigDecimal amount) {
+        validateAmount(amount);
+
         User user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new UserNotFoundException("User with keycloakId " + keycloakId + " not found, "));
 
-        if (user.getBalance().compareTo(amount) < 0) throw new UserNotPositiveAmount("User " + keycloakId + " has insufficient balance");
+        if (user.getBalance().compareTo(amount) < 0)
+            throw new UserNotPositiveAmount("User " + keycloakId + " has insufficient balance");
         user.setBalance(user.getBalance().subtract(amount));
         userRepository.save(user);
         log.info("Debited {} from user {}, new balance: {}", amount, keycloakId, user.getBalance());
@@ -96,11 +94,37 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void credit(String keycloakId, BigDecimal amount) {
+        validateAmount(amount);
+
         User user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new UserNotFoundException("User with keycloakId " + keycloakId + " not found, "));
 
         user.setBalance(user.getBalance().add(amount));
         userRepository.save(user);
         log.info("Credited {} to user {}, new balance: {}", amount, keycloakId, user.getBalance());
+    }
+
+    private void validateAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Amount must be positive");
+    }
+
+    private void sendEvent(RegistrationRequest request, UserRepresentation user) {
+        UserRegisteredEvent event = UserRegisteredEvent.builder()
+                .keycloakId(user.getId())
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .registeredAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+
+        // TODO Передеалть на Outbox Pattern
+        kafkaTemplate.send(topic, event).whenComplete((r, ex) -> {
+            if (ex != null) {
+                log.error("Kafka send failed", ex);
+            }
+        });
     }
 }

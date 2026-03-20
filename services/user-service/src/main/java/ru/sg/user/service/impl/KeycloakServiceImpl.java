@@ -1,10 +1,12 @@
 package ru.sg.user.service.impl;
 
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -44,8 +46,16 @@ public class KeycloakServiceImpl implements KeycloakService {
             user.setEnabled(true);
             user.setEmailVerified(false);
 
-            List<UserRepresentation> byUsername = users().search(request.getUsername(), 0, 1);
-            List<UserRepresentation> byEmail = users().searchByEmail(request.getEmail(), true);
+            List<UserRepresentation> byUsername = users().search(request.getUsername())
+                    .stream()
+                    .filter(u -> u.getUsername().equals(request.getUsername()))
+                    .toList();
+
+            List<UserRepresentation> byEmail = users().searchByEmail(request.getEmail(), true)
+                    .stream()
+                    .filter(u -> u.getEmail().equals(request.getEmail()))
+                    .toList();
+
             if (!byUsername.isEmpty() || !byEmail.isEmpty())
                 throw new UserAlreadyExistsException("User already exists");
 
@@ -71,15 +81,6 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
-    public String login(String username, String password) {
-        try {
-            return keycloak.tokenManager().getAccessTokenString();
-        } catch (Exception e) {
-            throw new UserInvalidCredentialsException("Invalid username or password");
-        }
-    }
-
-    @Override
     public void sendVerifyEmail(String userId) {
         try {
             users().get(userId).sendVerifyEmail();
@@ -95,6 +96,20 @@ public class KeycloakServiceImpl implements KeycloakService {
             return users().get(userId).toRepresentation();
         } catch (Exception e) {
             throw new UserNotFoundException("User not found in Keycloak");
+        }
+    }
+
+    @Override
+    public void deleteUser(String userId) {
+        try {
+            users().get(userId).remove();
+
+            log.info("User delete from Keycloak: {}", userId);
+        } catch (NotFoundException e) {
+            log.warn("User not found in Keycloak: {}", userId);
+        } catch (Exception e) {
+            log.error("Failed to delete user from Keycloak: {}", userId, e);
+            throw new RuntimeException("Failed to delete user in Keycloak", e); // Переделать на кастомную ошибку
         }
     }
 }

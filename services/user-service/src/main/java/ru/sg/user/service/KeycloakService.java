@@ -9,5 +9,5 @@ public interface KeycloakService {
     UserRepresentation registerUser(RegistrationRequest request) throws RegistrationException;
     void sendVerifyEmail(String userId);
     UserRepresentation getUserById(String userId);
-    String login(String username, String password);
+    void deleteUser(String userId);
 }

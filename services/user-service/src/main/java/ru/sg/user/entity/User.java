@@ -32,10 +32,6 @@ public class User {
     @Column(name = "preferences", columnDefinition = "TEXT")
     private String preferences;
 
-    @Column(name = "email_verified", nullable = false)
-    @Builder.Default
-    private boolean emailVerified = false;
-
     @Column(name = "create_at", nullable = false, updatable = false)
     private Instant createdAt;
 
