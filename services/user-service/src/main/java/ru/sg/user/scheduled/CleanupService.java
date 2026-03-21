@@ -9,7 +9,8 @@ import ru.sg.user.entity.User;
 import ru.sg.user.repository.UserRepository;
 import ru.sg.user.service.KeycloakService;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Component
@@ -23,7 +24,7 @@ public class CleanupService {
     @Scheduled(cron = "0 0 2 * * *")
     @Transactional
     public void cleanupExpiredTokens() {
-        List<User> expiredUsers = userRepository.findByTokenExpireDateBefore(LocalDateTime.now().minusDays(1));
+        List<User> expiredUsers = userRepository.findByTokenExpireDateBefore(Instant.now().minus(1, ChronoUnit.DAYS));
         if (expiredUsers.isEmpty()) {
             log.info("No users with tokens expired more than 24 hours ago found");
             return;

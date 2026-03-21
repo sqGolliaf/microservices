@@ -13,6 +13,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.sg.user.dto.request.event.RegistrationRequest;
+import ru.sg.user.exception.EmailAlreadyExistsException;
 import ru.sg.user.exception.RegistrationException;
 import ru.sg.user.exception.UserAlreadyExistsException;
 import ru.sg.user.exception.UserNotFoundException;
@@ -55,8 +56,8 @@ public class KeycloakServiceImpl implements KeycloakService {
                     .filter(u -> u.getEmail().equals(request.getEmail()))
                     .toList();
 
-            if (!byUsername.isEmpty() || !byEmail.isEmpty())
-                throw new UserAlreadyExistsException("User already exists");
+            if (!byUsername.isEmpty()) throw new UserAlreadyExistsException("Username already exists");
+            if (!byEmail.isEmpty()) throw new EmailAlreadyExistsException("Email already exists");
 
             Response response = users().create(user);
             if (response.getStatus() != 201) throw new RegistrationException("Failed to create user in Keycloak");

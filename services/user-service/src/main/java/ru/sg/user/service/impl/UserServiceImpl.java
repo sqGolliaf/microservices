@@ -2,9 +2,9 @@ package ru.sg.user.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +73,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Cacheable(value = "users", key = "#keycloakId")
     @Override
     public UserResponse getCurrentUser(String keycloakId) {
         User user = userRepository.findByKeycloakId(keycloakId)
@@ -119,7 +120,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void verifyEmail(String token) {
         User user = userRepository.findByVerificationToken(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid token"));
+                .orElseThrow(() -> new TokenExpiredException("Invalid token"));
 
         if (user.getTokenExpireDate().isBefore(Instant.now())) throw new TokenExpiredException("Token expired");
 
