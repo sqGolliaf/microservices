@@ -36,18 +36,20 @@ public class UserController {
     }
 
     @PostMapping("/debit")
-    public void debit(
+    public ResponseEntity<String> debit(
             @RequestHeader("X-USER-ID") String keycloakId,
             @RequestBody DebitRequest request
     ) {
         userService.debit(keycloakId, request.amount());
+        return ResponseEntity.ok("Successfully debit");
     }
 
     @PostMapping("/credit")
-    public void credit(
+    public ResponseEntity<String> credit(
             @RequestHeader("X-USER-ID") String keycloakId,
             @RequestBody CreditRequest request
     ) {
         userService.credit(keycloakId, request.amount());
+        return ResponseEntity.ok("Successfully credit");
     }
 }

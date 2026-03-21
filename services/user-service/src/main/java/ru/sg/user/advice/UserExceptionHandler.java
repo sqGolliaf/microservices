@@ -1,14 +1,10 @@
 package ru.sg.user.advice;
 
-import org.apache.http.auth.InvalidCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.sg.user.exception.EmailAlreadyExistsException;
-import ru.sg.user.exception.RegistrationException;
-import ru.sg.user.exception.TokenExpiredException;
-import ru.sg.user.exception.UserAlreadyExistsException;
+import ru.sg.user.exception.*;
 
 @RestControllerAdvice
 public class UserExceptionHandler {
@@ -18,13 +14,18 @@ public class UserExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<String> handleInvalidAuthentication(InvalidCredentialsException ex) {
+    @ExceptionHandler(UserInvalidCredentialsException.class)
+    public ResponseEntity<String> handleInvalidAuthentication(UserInvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
     }
 
     @ExceptionHandler(TokenExpiredException.class)
     public ResponseEntity<String> handleTokenExpired(TokenExpiredException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<String> handleUserNotFound(UserNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 }

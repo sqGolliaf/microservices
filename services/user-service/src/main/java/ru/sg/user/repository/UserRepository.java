@@ -1,6 +1,8 @@
 package ru.sg.user.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.sg.user.entity.User;
 
@@ -13,9 +15,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByKeycloakId(String keycloakId);
 
-    Optional<User> findByVerificationToken(String verificationToken);
+    @Query("select u from User u where u.verificationToken = :verificationToken")
+    Optional<User> findByVerificationToken(@Param("verificationToken") String verificationToken);
 
-    List<User> findByTokenExpiryDateBefore(LocalDateTime dateTime);
-
-
+    List<User> findByTokenExpireDateBefore(LocalDateTime dateTime);
 }
