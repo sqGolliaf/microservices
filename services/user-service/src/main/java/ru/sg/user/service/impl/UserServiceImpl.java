@@ -65,7 +65,7 @@ public class UserServiceImpl implements UserService {
             log.info("User registered successfully: {} (keycloakId: {})",
                     request.getUsername(), keycloakUser.getId());
 
-            return userMapper.toResponse(savedUser, keycloakUser.getEmail(), keycloakUser.getUsername());
+            return userMapper.toResponse(savedUser, keycloakUser.isEnabled(), keycloakUser.getEmail(), keycloakUser.getUsername());
         } catch (Exception e) {
             if (keycloakUser != null) keycloakService.deleteUser(keycloakUser.getId());
             log.error("User is not save, exception: ", e);
@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
 
         UserRepresentation keycloakUser = keycloakService.getUserById(keycloakId);
 
-        return userMapper.toResponse(user, keycloakUser.getEmail(), keycloakUser.getUsername());
+        return userMapper.toResponse(user, keycloakUser.isEnabled(), keycloakUser.getEmail(), keycloakUser.getUsername());
     }
 
     @Transactional
