@@ -1,7 +1,7 @@
 package ru.sg.user.service;
 
 import org.keycloak.representations.idm.UserRepresentation;
-import ru.sg.user.dto.request.event.RegistrationRequest;
+import ru.sg.user.dto.request.RegistrationRequest;
 import ru.sg.user.exception.RegistrationException;
 
 public interface KeycloakService {

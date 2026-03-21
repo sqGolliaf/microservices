@@ -8,7 +8,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.sg.user.dto.request.event.RegistrationRequest;
+import ru.sg.user.dto.request.RegistrationRequest;
 import ru.sg.user.dto.response.UserResponse;
 import ru.sg.user.entity.User;
 import ru.sg.user.event.UserRegisteredEvent;
@@ -60,7 +60,7 @@ public class UserServiceImpl implements UserService {
 
             keycloakService.sendVerifyEmail(keycloakUser.getId());
 
-            sendEvent(request, keycloakUser);
+            sendEvent(keycloakUser);
 
             log.info("User registered successfully: {} (keycloakId: {})",
                     request.getUsername(), keycloakUser.getId());
@@ -131,13 +131,13 @@ public class UserServiceImpl implements UserService {
         keycloakService.setEmailVerified(user.getKeycloakId(), true);
     }
 
-    private void sendEvent(RegistrationRequest request, UserRepresentation user) {
+    private void sendEvent(UserRepresentation keycloakUser) {
         UserRegisteredEvent event = UserRegisteredEvent.builder()
-                .keycloakId(user.getId())
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
+                .keycloakId(keycloakUser.getId())
+                .username(keycloakUser.getUsername())
+                .email(keycloakUser.getEmail())
+                .firstName(keycloakUser.getFirstName())
+                .lastName(keycloakUser.getLastName())
                 .registeredAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();

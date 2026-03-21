@@ -1,5 +1,6 @@
 package ru.sg.user.event;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +18,8 @@ public class UserRegisteredEvent {
     private String email;
     private String firstName;
     private String lastName;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant registeredAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant updatedAt;
 }

@@ -12,7 +12,7 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.sg.user.dto.request.event.RegistrationRequest;
+import ru.sg.user.dto.request.RegistrationRequest;
 import ru.sg.user.exception.EmailAlreadyExistsException;
 import ru.sg.user.exception.RegistrationException;
 import ru.sg.user.exception.UserAlreadyExistsException;

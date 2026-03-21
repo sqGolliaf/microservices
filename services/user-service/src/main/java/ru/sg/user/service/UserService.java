@@ -1,6 +1,6 @@
 package ru.sg.user.service;
 
-import ru.sg.user.dto.request.event.RegistrationRequest;
+import ru.sg.user.dto.request.RegistrationRequest;
 import ru.sg.user.dto.response.UserResponse;
 
 import java.math.BigDecimal;
