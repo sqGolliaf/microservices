@@ -1,5 +1,6 @@
-package ru.sg.email.dto.event
+package ru.sg.notification.dto.event
 
+import java.io.Serializable
 import java.time.Instant
 
 data class UserRegisteredEvent(
@@ -10,4 +11,4 @@ data class UserRegisteredEvent(
     val lastName: String,
     val registeredAt: Instant,
     val updatedAt: Instant
-)
+) : Serializable

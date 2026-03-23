@@ -1,14 +1,16 @@
-package ru.sg.email.listener
+package ru.sg.notification.listener
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
-import ru.sg.email.dto.event.UserRegisteredEvent
-import ru.sg.email.service.impl.EmailServiceImpl
+import ru.sg.notification.dto.event.UserRegisteredEvent
+import ru.sg.notification.service.impl.EmailServiceImpl
 
 @Component
 class UserEventListener(
-    val emailService: EmailServiceImpl
+    private val emailService: EmailServiceImpl,
+    private val objectMapper: ObjectMapper
 ) {
 
     companion object {
@@ -19,8 +21,10 @@ class UserEventListener(
         topics = [$$"${users.kafka.topic.user-registered:user-events}"],
         groupId = $$"${users.kafka.groupId:user}"
     )
-    fun listenUserService(userRegisteredEvent: UserRegisteredEvent) {
-        log.info("Received user registration event: $userRegisteredEvent")
+    fun listenUserService(message: String) {
+        log.info("Received user registration event: $message")
+
+        val userRegisteredEvent = objectMapper.readValue(message, UserRegisteredEvent::class.java)
 
         emailService.sendVerificationEmail(userRegisteredEvent)
     }

@@ -1,11 +1,11 @@
-package ru.sg.email
+package ru.sg.notification
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class EmailServiceApplication
+class NotificationServiceApplication
 
 fun main(args: Array<String>) {
-    runApplication<EmailServiceApplication>(*args)
+    runApplication<NotificationServiceApplication>(*args)
 }

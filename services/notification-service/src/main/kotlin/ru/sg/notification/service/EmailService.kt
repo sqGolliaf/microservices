@@ -1,6 +1,6 @@
-package ru.sg.email.service
+package ru.sg.notification.service
 
-import ru.sg.email.dto.event.UserRegisteredEvent
+import ru.sg.notification.dto.event.UserRegisteredEvent
 
 interface EmailService {
 

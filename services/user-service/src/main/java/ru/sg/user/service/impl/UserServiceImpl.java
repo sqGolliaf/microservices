@@ -142,7 +142,7 @@ public class UserServiceImpl implements UserService {
                 .updatedAt(Instant.now())
                 .build();
 
-        // TODO Передеалть на Outbox Pattern
+        // TODO Переделать на Outbox Pattern
         kafkaTemplate.send(topic, event).whenComplete((r, ex) -> {
             if (ex != null) {
                 log.error("Kafka send failed", ex);

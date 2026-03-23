@@ -1,4 +1,4 @@
-package ru.sg.email.entity.enums
+package ru.sg.notification.entity.enums
 
 enum class Status(
     val value: String

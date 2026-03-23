@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/users
+    url: jdbc:postgresql://localhost:5432/user_service
     username: admin
     password: admin
     driver-class-name: org.postgresql.Driver
@@ -33,8 +33,8 @@ spring:
 keycloak:
   server-url: http://localhost:9080
   realm: microservices
-  client-id: gateway-client
-  client-secret: WZM9u18bCuJVUvTPQXt4rUXab3o1KHXT
+  client-id: user-client
+  client-secret: ddosin8nhF9y4Q0yiTIFhiDdUZHJMqp5
 
 logging:
   level:

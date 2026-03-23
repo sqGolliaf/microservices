@@ -1,16 +1,16 @@
-package ru.sg.email.entity
+package ru.sg.notification.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.annotation.Id
-import ru.sg.email.entity.enums.Status
+import ru.sg.notification.entity.enums.Status
 import java.time.Instant
 
 @Entity
-@Table(name = "t_email")
+@Table(name = "t_notification")
 data class Email(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,10 +48,5 @@ data class Email(
     val createdAt: Instant = Instant.now(),
 
     @Column(name = "updated_at", nullable = false)
-    val updatedAt: Instant = Instant.now()
-) {
-    @Override
-    override fun toString(): String {
-        return this::class.simpleName + "(email = $email , id = $id , keycloakId = $keycloakId , verificationToken = $verificationToken , sentAt = $sentAt , status = $status , verifiedAt = $verifiedAt , mailgunMessageId = $mailgunMessageId , retryCount = $retryCount , errorMessage = $errorMessage , createdAt = $createdAt , updatedAt = $updatedAt )"
-    }
-}
+    var updatedAt: Instant = Instant.now()
+)
