@@ -2,6 +2,8 @@ package ru.sg.notification.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -26,6 +28,7 @@ data class Email(
     @Column(name = "verification_token", nullable = false, unique = true)
     val verificationToken: String = "",
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     var status: Status = Status.PENDING,
 

@@ -7,6 +7,7 @@ data class UserRegisteredEvent(
     val keycloakId: String,
     val username: String,
     val email: String,
+    val verificationToken: String,
     val firstName: String,
     val lastName: String,
     val registeredAt: Instant,

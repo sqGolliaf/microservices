@@ -16,6 +16,7 @@ public class UserRegisteredEvent {
     private String keycloakId;
     private String username;
     private String email;
+    private String verificationToken;
     private String firstName;
     private String lastName;
     @JsonFormat(shape = JsonFormat.Shape.STRING)

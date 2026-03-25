@@ -37,5 +37,9 @@ users:
     groupId: users
 
 email:
+  kafka:
+    group-id: notification-service
+    topic:
+      email-registered: email-events
+
   verification-url: http://localhost:8081/api/v1/users/verify-email
-  max-retries: 5

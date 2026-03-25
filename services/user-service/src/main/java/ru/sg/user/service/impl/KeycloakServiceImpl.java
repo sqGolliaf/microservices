@@ -81,16 +81,6 @@ public class KeycloakServiceImpl implements KeycloakService {
     }
 
     @Override
-    public void sendVerifyEmail(String userId) {
-        try {
-            users().get(userId).sendVerifyEmail();
-            log.info("Verification email sent to user: {}", userId);
-        } catch (Exception e) {
-            log.error("Failed to send verification email", e);
-        }
-    }
-
-    @Override
     public UserRepresentation getUserById(String keycloakId) {
         try {
             return users().get(keycloakId).toRepresentation();

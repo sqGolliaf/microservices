@@ -4,16 +4,17 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.sg.user.event.enums.EmailStatus;
 
-import java.time.Instant;
+import java.io.Serializable;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class UserAuthenticatedEvent {
-    private String keycloakId;
-    private String username;
+public class EmailEvent implements Serializable {
+
+    private Long id;
     private String email;
-    private Instant authenticatedAt;
+    private EmailStatus status;
 }

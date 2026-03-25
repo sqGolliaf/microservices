@@ -1,5 +1,8 @@
 package ru.sg.user.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -11,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.sg.user.dto.request.RegistrationRequest;
 import ru.sg.user.dto.response.UserResponse;
 import ru.sg.user.entity.User;
+import ru.sg.user.event.EmailEvent;
 import ru.sg.user.event.UserRegisteredEvent;
+import ru.sg.user.event.enums.EmailStatus;
 import ru.sg.user.exception.TokenExpiredException;
 import ru.sg.user.exception.UserNotFoundException;
 import ru.sg.user.exception.UserNotPositiveAmount;
@@ -34,10 +39,14 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final KeycloakService keycloakService;
-    private final KafkaTemplate<String, UserRegisteredEvent> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper jsonMapper;
 
     @Value("${spring.kafka.topics.user-registered}")
-    private String topic;
+    private String topicUser;
+
+    @Value("${spring.kafka.topics.email-verified}")
+    private String topicEmail;
 
     @Override
     public UserResponse register(RegistrationRequest request) {
@@ -58,9 +67,7 @@ public class UserServiceImpl implements UserService {
 
             User savedUser = userRepository.save(user);
 
-            keycloakService.sendVerifyEmail(keycloakUser.getId());
-
-            sendEvent(keycloakUser);
+            sendEvent(keycloakUser, user);
 
             log.info("User registered successfully: {} (keycloakId: {})",
                     request.getUsername(), keycloakUser.getId());
@@ -125,28 +132,55 @@ public class UserServiceImpl implements UserService {
         if (user.getTokenExpireDate().isBefore(Instant.now())) throw new TokenExpiredException("Token expired");
 
         user.setVerificationToken(null);
-        userRepository.save(user);
+        User saveUser = userRepository.save(user);
 
         keycloakService.enableUser(user.getKeycloakId());
         keycloakService.setEmailVerified(user.getKeycloakId(), true);
+        UserRepresentation userById = keycloakService.getUserById(user.getKeycloakId());
+
+        sendEventEmail(userById, saveUser);
+        log.info("Email is activated: {}", userById.getEmail());
     }
 
-    private void sendEvent(UserRepresentation keycloakUser) {
+    private void sendEvent(UserRepresentation keycloakUser, User user) {
         UserRegisteredEvent event = UserRegisteredEvent.builder()
                 .keycloakId(keycloakUser.getId())
                 .username(keycloakUser.getUsername())
                 .email(keycloakUser.getEmail())
+                .verificationToken(user.getVerificationToken())
                 .firstName(keycloakUser.getFirstName())
                 .lastName(keycloakUser.getLastName())
                 .registeredAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
 
-        // TODO Переделать на Outbox Pattern
-        kafkaTemplate.send(topic, event).whenComplete((r, ex) -> {
-            if (ex != null) {
-                log.error("Kafka send failed", ex);
-            }
-        });
+        try {
+            String jsonUserRegisteredEvent = jsonMapper.writeValueAsString(event);
+
+            // TODO Переделать на Outbox Pattern
+            kafkaTemplate.send(topicUser, jsonUserRegisteredEvent).whenComplete((r, ex) -> {
+                if (ex != null) {
+                    log.error("Kafka send failed", ex);
+                }
+            });
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void sendEventEmail(UserRepresentation keycloakUser, User user) {
+        EmailEvent event = EmailEvent.builder()
+                .id(user.getId())
+                .email(keycloakUser.getEmail())
+                .status(EmailStatus.VERIFIED)
+                .build();
+
+        try {
+            String jsonEmailEvent = jsonMapper.writeValueAsString(event);
+            kafkaTemplate.send(topicEmail, jsonEmailEvent);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }
