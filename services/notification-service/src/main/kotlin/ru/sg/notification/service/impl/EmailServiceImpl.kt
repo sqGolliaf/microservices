@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import ru.sg.notification.client.EmailClient
 import ru.sg.notification.dto.event.EmailEvent
@@ -27,6 +28,7 @@ class EmailServiceImpl(
         private val logger: Logger = LoggerFactory.getLogger(EmailServiceImpl::class.java)
     }
 
+    @Async("emailExecutor")
     override fun sendVerificationEmail(userRegisteredEvent: UserRegisteredEvent) {
         val email = Email(
             email = userRegisteredEvent.email,

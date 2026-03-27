@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: analytics-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/analytics_service
+    username: admin
+    password: admin
+    driver-class-name: org.postgresql.Driver
+
+  kafka:
+    bootstrap-servers: localhost:29092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: analytics-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+
+management:
+  endpoints:
+    web:
+      exposure:
+        exclude: enb,beans
+        include: '*'
