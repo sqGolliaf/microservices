@@ -24,9 +24,9 @@ public class CleanupService {
     @Scheduled(cron = "0 0 2 * * *")
     @Transactional
     public void cleanupExpiredTokens() {
-        List<User> expiredUsers = userRepository.findByTokenExpireDateBefore(Instant.now().minus(1, ChronoUnit.DAYS));
+        List<User> expiredUsers = userRepository.findByTokenExpireDateBefore(Instant.now().minus(1, ChronoUnit.MONTHS));
         if (expiredUsers.isEmpty()) {
-            log.info("No users with tokens expired more than 24 hours ago found");
+            log.info("No users with tokens expired more than 1 months ago found");
             return;
         }
         userRepository.deleteAllInBatch(expiredUsers);
