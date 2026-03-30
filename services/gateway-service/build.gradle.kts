@@ -4,7 +4,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
 }
 
-group = "com.example"
+group = "ru.sg"
 version = "0.0.1-SNAPSHOT"
 description = "Demo project for Spring Boot"
 
@@ -23,8 +23,6 @@ configurations {
 repositories {
     mavenCentral()
 }
-
-extra["springCloudVersion"] = "2025.1.0"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -51,7 +49,7 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${rootProject.ext["springCloudVersion"]}")
     }
 }
 

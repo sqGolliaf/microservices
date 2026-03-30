@@ -19,9 +19,7 @@ public class EventProcessor {
         return CompletableFuture.runAsync(() -> {
             log.info("Processing event: {} from {}", event.eventType(), event.sourceService());
 
-            // Switch expression (Java 12+) + Pattern matching (Java 16+)
-            var result = switch (event) {
-                // Pattern matching на конкретные типы
+            switch (event) {
                 case AnalyticsEvent.OrderCreatedEvent orderEvent -> analyticsService.processOrderCreated(orderEvent);
 
                 case AnalyticsEvent.OrderConfirmedEvent orderConfirmed ->
@@ -33,9 +31,7 @@ public class EventProcessor {
 
                 case AnalyticsEvent.PaymentProcessedEvent paymentEvent ->
                         analyticsService.processPaymentProcessed(paymentEvent);
-
-                default -> throw new IllegalArgumentException("Unknown event: " + event);
-            };
+            }
 
             log.info("Event processed: {}", event.eventType());
         });

@@ -4,8 +4,6 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
 }
 
-group = "ru.sg"
-version = "0.0.1-SNAPSHOT"
 description = "user-service"
 
 java {
@@ -20,10 +18,6 @@ configurations {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
@@ -31,13 +25,13 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-kafka")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.keycloak:keycloak-admin-client:26.0.8")
+    implementation("org.keycloak:keycloak-admin-client:${rootProject.ext["keycloakVersion"]}")
 
-    implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("com.fasterxml.jackson.core:jackson-databind:${rootProject.ext["jacksonVersion"]}")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${rootProject.ext["jacksonVersion"]}")
 
     compileOnly("org.projectlombok:lombok")
-    runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("org.postgresql:postgresql:${rootProject.ext["postgresqlVersion"]}")
     annotationProcessor("org.projectlombok:lombok")
 
     testImplementation("org.springframework.boot:spring-boot-starter-kafka-test")
