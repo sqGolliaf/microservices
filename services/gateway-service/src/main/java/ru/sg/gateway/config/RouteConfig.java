@@ -52,15 +52,9 @@ public class RouteConfig {
 
             ServerHttpRequest.Builder requestBuilder = exchange.getRequest().mutate();
 
-            if (userId != null) {
-                requestBuilder.header("X-USER-ID", userId);
-            }
-            if (username != null) {
-                requestBuilder.header("X-USERNAME", username);
-            }
-            if (email != null) {
-                requestBuilder.header("X-EMAIL", email);
-            }
+            if (userId != null) requestBuilder.header("X-USER-ID", userId);
+            if (username != null) requestBuilder.header("X-USERNAME", username);
+            if (email != null) requestBuilder.header("X-EMAIL", email);
 
             ServerWebExchange mutatedExchange = exchange.mutate()
                     .request(requestBuilder.build())
