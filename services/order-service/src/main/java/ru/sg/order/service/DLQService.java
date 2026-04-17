@@ -51,10 +51,15 @@ public class DLQService {
                     .setHeader("original-topic", originalTopic)
                     .build();
 
-            kafkaTemplate.send(message);
-            dlqEventRepository.save(dlqEvent);
+            kafkaTemplate.send(message).whenComplete((res, ex) -> {
+                if (ex == null) {
+                    log.info("Event sent to DLQ: eventId={}, originalTopic={}", eventId, originalTopic);
+                    dlqEventRepository.save(dlqEvent);
+                } else {
+                    log.error("Failed to send event to DLQ", ex);
+                }
+            });
 
-            log.info("Event sent to DLQ: eventId={}, originalTopic={}", eventId, originalTopic);
         } catch (Exception e) {
             log.error("Failed to send event to DLQ", e);
         }

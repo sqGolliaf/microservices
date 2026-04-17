@@ -1,6 +1,8 @@
 package ru.sg.order.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +24,9 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<OrderResponse> saveOrder(
             @Valid @RequestBody CreateOrderRequest request,
-            @RequestHeader("X-USER-ID") String keycloakId,
-            @RequestHeader("X-EMAIL") String email,
-            @RequestHeader("X-USERNAME") String username) {
+            @RequestHeader("X-USER-ID") @NotBlank String keycloakId,
+            @RequestHeader("X-EMAIL") @Email String email,
+            @RequestHeader("X-USERNAME") @NotBlank String username) {
         log.info("Creating order: {}", request.name());
         OrderResponse response = orderService.createOrder(request, keycloakId, email, username);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

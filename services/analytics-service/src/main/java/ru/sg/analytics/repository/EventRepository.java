@@ -12,6 +12,7 @@ public interface EventRepository extends JpaRepository<EventStatistic, Long> {
     @Query("""
         select e from EventStatistic e
         where e.createdAt >= :since
+        group by e.eventType
         order by e.createdAt DESC
         """)
     List<EventStatistic> findEventsSince(Instant since);

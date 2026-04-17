@@ -35,27 +35,29 @@ public class OrderService {
             String email,
             String username
     ) {
+        String sagaId = UUID.randomUUID().toString();
+        Order order = Order.builder()
+                .sagaId(sagaId)
+                .keycloakId(keycloakId)
+                .name(createOrderRequest.name())
+                .quantity(createOrderRequest.quantity())
+                .price(createOrderRequest.price())
+                .status(OrderStatus.PENDING)
+                .build();
+
         try {
             UserResponse user = userServiceClient.getOrCreateUser(keycloakId, email, username);
             log.info("User found/created: userId={}, email={}", user.userId(), user.email());
 
-            String sagaId = UUID.randomUUID().toString();
-            Order order = Order.builder()
-                    .sagaId(sagaId)
-                    .keycloakId(keycloakId)
-                    .name(createOrderRequest.name())
-                    .quantity(createOrderRequest.quantity())
-                    .price(createOrderRequest.price())
-                    .status(OrderStatus.PENDING)
-                    .build();
-
             Order saveOrder = orderRepository.save(order);
-
             outboxService.createOutboxEvent(saveOrder, OutboxType.ORDER_CREATED);
 
             log.info("Order created: orderId={}, sagaId={}", saveOrder.getId(), sagaId);
             return orderMapper.toResponse(saveOrder);
         } catch (Exception e) {
+            order.setStatus(OrderStatus.FAILED);
+            orderRepository.save(order);
+
             log.error("Failed to create order for keycloakId: {}", keycloakId, e);
             throw new RuntimeException("Failed to create order: " + e.getMessage(), e);
         }
